@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express'
 import cors from 'cors'
-import users from './routes/users'
 import './loadEnvironment'
+import users from './routes/users'
 import './db/conn'
 
 const app: Express = express()

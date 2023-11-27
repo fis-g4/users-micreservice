@@ -1,38 +1,64 @@
-import mongoose from 'mongoose'
+import mongoose, { ObjectId } from 'mongoose'
 
 const { Schema } = mongoose
 
-interface IUser{
-    name: string;
-    email: string;
-    password: string;
+interface IUser {
+    _id?: ObjectId
+    firstName: string
+    lastName: string
+    username: string
+    password: string
+    email: string
 }
 
 interface UserDoc extends mongoose.Document {
-    name: string;
-    email: string;
-    password: string;
+    _id?: ObjectId
+    firstName: string
+    lastName: string
+    username: string
+    password: string
+    email: string
 }
 
 interface UserModelInterface extends mongoose.Model<UserDoc> {
-    build(attr: IUser): UserDoc;
+    build(attr: IUser): UserDoc
 }
 
-
-const userSchema = new Schema({
-    name: {
-        type: String,
-        //required: true,
+const userSchema = new Schema(
+    {
+        firstName: {
+            type: String,
+            //required: true,
+        },
+        lastName: {
+            type: String,
+            //required: true,
+        },
+        username: {
+            type: String,
+            unique: true,
+            //required: true,
+        },
+        password: {
+            type: String,
+            //required: true,
+        },
+        email: {
+            type: String,
+            unique: true,
+            //required: true,
+        },
     },
-    email: {
-        type: String,
-        //required: true,
-    },
-    password: {
-        type: String,
-        //required: true,
-    },
-})
+    {
+        virtuals: {
+            fullName: {
+                get() {
+                    return (this.firstName ?? '') + ' ' + (this.lastName ?? '')
+                },
+            },
+        },
+    }
+)
 
 userSchema.statics.build = (user: IUser) => {
     return new User(user)
@@ -40,4 +66,4 @@ userSchema.statics.build = (user: IUser) => {
 
 const User = mongoose.model<UserDoc, UserModelInterface>('User', userSchema)
 
-export { User }
+export { User, IUser }
