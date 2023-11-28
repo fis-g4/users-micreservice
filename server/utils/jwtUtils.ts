@@ -5,8 +5,8 @@ import { IUser } from '../db/models/user'
 const JWT_SECRET: string = process.env.JWT_SECRET ?? ''
 
 interface IPayload {
-    payload: IUser,
-    iat: number,
+    payload: IUser
+    iat: number
     exp: number
 }
 
@@ -22,28 +22,61 @@ function generateToken(payload: object, res: Response) {
     })
 
     if (token === '') {
-        res.status(500).send('Error generating token!')
+        res.status(500).json({message: 'Error generating token!'})
     } else {
         return token
     }
 }
 
-function verifyToken(req: Request, res: Response) {
+function verifyToken(
+    req: Request,
+    res: Response,
+    isAllowedUrl: boolean = false
+):  IPayload | undefined {
+
     let bearerHeader = req.headers['authorization']
 
     if (typeof bearerHeader === 'undefined') {
-        res.sendStatus(401)
+        if (!isAllowedUrl) {
+            res.status(401).json({message: 'You need to provide an authorization token to use this endpoint'})
+        }
+        return undefined
     } else {
         let bearer: string[] = bearerHeader.split(' ')
         let bearerToken: string = bearer[1]
         let token: string = bearerToken
 
-        let payload: IPayload= jwt.verify(token, JWT_SECRET, {
-            algorithms: ['HS256'],
-        }) as IPayload
+        try {
+            let payload: IPayload = jwt.verify(token, JWT_SECRET, {
+                algorithms: ['HS256'],
+            }) as IPayload
 
-        return payload.payload as IUser;
+            return payload;
+        } catch (err) {
+            if (err instanceof jwt.TokenExpiredError) {
+                res.status(401).json({message: 'Token expired!'})
+            } else if (err instanceof jwt.JsonWebTokenError) {
+                res.status(401).json({message: 'Invalid token!'})
+            } else {
+                res.status(500).json({message: 'Error verifying token!'})
+            }
+            return undefined;
+        }
     }
 }
 
-export { generateToken, verifyToken }
+function getPayloadFromToken(req: Request): IUser{
+    let bearerHeader = req.headers['authorization'] as string;
+
+    let bearer: string[] = bearerHeader.split(' ')
+    let bearerToken: string = bearer[1]
+    let token: string = bearerToken
+
+    let payload: IPayload = jwt.verify(token, JWT_SECRET, {
+        algorithms: ['HS256'],
+    }) as IPayload
+
+    return payload.payload;
+}
+
+export { generateToken, verifyToken, getPayloadFromToken }

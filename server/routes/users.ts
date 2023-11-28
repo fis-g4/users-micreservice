@@ -1,15 +1,11 @@
 import express, { Request, Response } from 'express'
 import { IUser, User } from '../db/models/user'
-import { generateToken, verifyToken } from '../utils/jwtUtils'
+import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
 
 const router = express.Router()
 
 router.get('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser | undefined = verifyToken(req, res)
-
-    if (!decodedToken) {
-        return res.status(401).send('Invalid token!')
-    }
+    let decodedToken: IUser = getPayloadFromToken(req);
 
     const user = await User.findOne({ username: decodedToken.username })
 
@@ -17,7 +13,6 @@ router.get('/me', async (req: Request, res: Response) => {
 })
 
 router.get('/:userId', async (req: Request, res: Response) => {
-    let decodedToken = verifyToken(req, res)
 
     const user = await User.findById(req.params.userId).select('-password')
 
@@ -63,7 +58,6 @@ router.post('/login', async (req: Request, res: Response) => {
 })
 
 router.put('/:userId', async (req: Request, res: Response) => {
-    let decodedToken = verifyToken(req, res)
     const userData: object = req.body
 
     if (!userData) {
@@ -79,11 +73,11 @@ router.put('/:userId', async (req: Request, res: Response) => {
     }
 })
 
-router.delete('/:userId', async (req: Request, res: Response) => {
+router.delete('/me', async (req: Request, res: Response) => {
 
-    let decodedToken = verifyToken(req, res)
+    let decodedToken: IUser = getPayloadFromToken(req);
 
-    await User.findByIdAndDelete(req.params.userId)
+    await User.findOneAndDelete({ username: decodedToken.username })
 
     return res.status(200).json({ message: 'User deleted!' })
 
