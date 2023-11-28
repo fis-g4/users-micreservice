@@ -1,39 +1,86 @@
-import express, {Request, Response} from 'express';
-import { User } from '../db/models/user';
+import express, { Request, Response } from 'express'
+import { IUser, User } from '../db/models/user'
+import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
 
 const router = express.Router()
 
-router.get('/', async (req: Request, res: Response) => {
-    const users = await User.find({})
+router.get('/me', async (req: Request, res: Response) => {
+    let decodedToken: IUser = getPayloadFromToken(req);
 
-    return res.status(200).json(users)
+    const user = await User.findOne({ username: decodedToken.username })
+
+    return res.status(200).json(user)
 })
 
-router.post('/login', async (req: Request, res: Response) => {
-    const { email, password }: FormInputs = req.body
+router.get('/:userId', async (req: Request, res: Response) => {
 
-    const user = await User.findOne({email, password});
+    const user = await User.findById(req.params.userId).select('-password')
 
     if (!user) {
-        return res.status(404).send('User Not Found!')
+        return res.status(404).send('User does not exist!')
     }
 
     return res.status(200).json(user)
 })
 
-router.post('/', async (req: Request, res: Response) => {
-  const { email, password }: FormInputs = req.body
+router.post('/new', async (req: Request, res: Response) => {
+    const userData: IUser = req.body
 
-  let name = "Test User";
+    if (!userData) {
+        return res.status(400).send('No user data sent!')
+    }
 
-  const user = User.build({
-    name: name, 
-    email: email, 
-    password: password});
+    const user = User.build(userData)
 
-  await user.save();
+    try {
+        await user.save()
+    } catch (err) {
+        return res.status(400).send('Username or email already exist!')
+    }
 
-  return res.status(201).json(user)
+    let token = generateToken(user, res)
+
+    return res.status(201).json({ jwtToken: token })
+})
+
+router.post('/login', async (req: Request, res: Response) => {
+    const { username, password }: FormInputs = req.body
+
+    const user = await User.findOne({ username: username, password: password })
+
+    if (!user) {
+        return res.status(404).send('User does not exist!')
+    }
+
+    let token = generateToken(user, res)
+
+    return res.status(200).json({ jwtToken: token })
+})
+
+router.put('/:userId', async (req: Request, res: Response) => {
+    const userData: object = req.body
+
+    if (!userData) {
+        return res.status(400).send('No user data sent!')
+    }
+    try {
+        await User.findByIdAndUpdate(req.params.userId, {$set: {...userData}})
+
+        return res.status(200).json({ message: 'User updated!' })
+
+    } catch (err) {
+        return res.status(400).send(err)
+    }
+})
+
+router.delete('/me', async (req: Request, res: Response) => {
+
+    let decodedToken: IUser = getPayloadFromToken(req);
+
+    await User.findOneAndDelete({ username: decodedToken.username })
+
+    return res.status(200).json({ message: 'User deleted!' })
+
 })
 
 export default router
