@@ -2,15 +2,19 @@ import { User } from './models/user';
 
 function populateUsers() {
     User.build({
-        name: 'Maria Doe',
-        email: 'maria@example.com',
+        firstName: 'Maria', 
+        lastName: 'Doe',
+        username: 'mariaDoe',
         password: 'maria123',
+        email: 'maria@example.com',
     }).save();
     
     User.build({
-        name: 'Juan Doe',
+        firstName: 'John',
+        lastName: 'Doe',
+        username: 'johnDoe',
+        password: 'john123',
         email: 'juan@example.com',
-        password: 'juan123',
     }).save();
 }
 
