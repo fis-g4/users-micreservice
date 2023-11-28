@@ -23,7 +23,7 @@ router.get('/:userId', async (req: Request, res: Response) => {
     return res.status(200).json(user)
 })
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/new', async (req: Request, res: Response) => {
     const userData: IUser = req.body
 
     if (!userData) {

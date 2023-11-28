@@ -10,7 +10,7 @@ const app: Express = express()
 app.use(express.json())
 app.use(cors())
 
-const URLS_ALLOWED_WITHOUT_TOKEN = ["/users/login", "/users"];
+const URLS_ALLOWED_WITHOUT_TOKEN = ["/users/login", "/users/new"];
 
 app.use((req, res, next) => {
 
