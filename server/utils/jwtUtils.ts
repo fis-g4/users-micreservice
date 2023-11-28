@@ -3,6 +3,7 @@ import * as jwt from 'jsonwebtoken'
 import { IUser } from '../db/models/user'
 
 const JWT_SECRET: string = process.env.JWT_SECRET ?? ''
+const JWT_EXPIRATION_TIME: string = process.env.JWT_EXPIRATION_TIME ?? ''
 
 interface IPayload {
     payload: IUser
@@ -18,7 +19,7 @@ if (JWT_SECRET === '') {
 function generateToken(payload: object, res: Response) {
     let token = jwt.sign({ payload }, JWT_SECRET, {
         algorithm: 'HS256',
-        expiresIn: '1h',
+        expiresIn: JWT_EXPIRATION_TIME,
     })
 
     if (token === '') {
