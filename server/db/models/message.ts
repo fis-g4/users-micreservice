@@ -1,27 +1,29 @@
-import mongoose from 'mongoose'
+import mongoose, { ObjectId } from 'mongoose'
 
 const { Schema } = mongoose
 
 interface IMessage{
+    _id?: ObjectId;
     subject: string;
-    messsage: string;
-    sender: number;
-    receivers: Array<number>;
+    message: string;
+    sender: string;
+    receivers: Array<string>;
     date: Date;
-    has_been_opened: boolean;
-    deleted_by_sender: boolean;
-    deleted_by_receiver: boolean;
+    has_been_opened: Array<Boolean>;
+    deleted_by_sender: Boolean;
+    deleted_by_receiver: Array<Boolean>;
 }
 
 interface MessageDoc extends mongoose.Document {
+    _id?: ObjectId;
     subject: string;
-    messsage: string;
-    sender: number;
-    receivers: Array<number>;
+    message: string;
+    sender: string;
+    receivers: Array<string>;
     date: Date;
-    has_been_opened: boolean;
-    deleted_by_sender: boolean;
-    deleted_by_receiver: boolean;
+    has_been_opened: Array<Boolean>;
+    deleted_by_sender: Boolean;
+    deleted_by_receiver: Array<Boolean>;
 }
 
 interface MessageModelInterface extends mongoose.Model<MessageDoc> {
@@ -36,7 +38,7 @@ const messageSchema = new Schema({
         maxLength: 100,
         trim: true
     },
-    messsage: {
+    message: {
         type: String,
         required: true,
         minLength: 1,
@@ -44,14 +46,15 @@ const messageSchema = new Schema({
         trim: true
     },
     sender: {
-        type: Number,
+        type: String,
         required: true,
-        min: 0
+        minLength: 1,
     },
     receivers: {
-        type: Array<number>(),
+        type: Array<String>(),
         required: true,
-        validate: (a: Array<number>) => Array.isArray(a) && a.length > 0 && a.every((n: number) => n >= 0)
+        minLength: 1,
+        validate: (a: Array<String>) => a.length > 0 && a.every((n: String) => n.length>0)
     },
     date: {
         type: Date,
@@ -60,9 +63,9 @@ const messageSchema = new Schema({
         validate: (v: Date) => v.getTime() <= Date.now()
     },
     has_been_opened: {
-        type: Boolean,
+        type: Array<Boolean>,
         required: true,
-        default: false
+        validate: (a: Array<Boolean>) => a.length > 0
     },
     deleted_by_sender: {
         type: Boolean,
@@ -70,9 +73,9 @@ const messageSchema = new Schema({
         default: false
     },
     deleted_by_receiver: {
-        type: Boolean,
+        type: Array<Boolean>,
         required: true,
-        default: false
+        validate: (a: Array<Boolean>) => a.length > 0
     }
 })
 
@@ -82,4 +85,4 @@ messageSchema.statics.build = (message: IMessage) => {
 
 const Message = mongoose.model<MessageDoc, MessageModelInterface>('Message', messageSchema)
 
-export { Message }
+export { Message, IMessage }

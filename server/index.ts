@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from 'express'
 import cors from 'cors'
 import './loadEnvironment'
 import users from './routes/users'
+import messages from './routes/messages'
 import './db/conn'
 import { generateToken, verifyToken } from './utils/jwtUtils'
 
@@ -37,3 +38,4 @@ app.listen(port, () => {
 })
 
 app.use('/users', users)
+app.use('/users', messages)
