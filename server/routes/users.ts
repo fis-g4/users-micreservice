@@ -1,11 +1,25 @@
 import express, { Request, Response } from 'express'
-import { IUser, User } from '../db/models/user'
+import { IUser, PlanType, User } from '../db/models/user'
 import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
+import { validateUser } from '../utils/validators/userValidator'
+import bcrypt from 'bcrypt'
 
 const router = express.Router()
 
+const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS || "10");
+const salt = bcrypt.genSaltSync(SALT_ROUNDS);
+
+const EMPTY_USER: IUser = {
+    firstName: '',
+    lastName: '',
+    username: '',
+    password: '',
+    email: '',
+    plan: PlanType.FREE,
+}
+
 router.get('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = getPayloadFromToken(req)
 
     const user = await User.findOne({ username: decodedToken.username })
 
@@ -13,7 +27,6 @@ router.get('/me', async (req: Request, res: Response) => {
 })
 
 router.get('/:userId', async (req: Request, res: Response) => {
-
     const user = await User.findById(req.params.userId).select('-password')
 
     if (!user) {
@@ -24,32 +37,38 @@ router.get('/:userId', async (req: Request, res: Response) => {
 })
 
 router.post('/new', async (req: Request, res: Response) => {
-    const userData: IUser = req.body
+    let userData: IUser = req.body
 
-    if (!userData) {
-        return res.status(400).send('No user data sent!')
+    userData = { ...EMPTY_USER, ...userData }
+
+    await validateUser(userData, res);
+
+    if (res.statusCode !== 200) {
+        return res;
+    }else{
+
+        const hash = bcrypt.hashSync(userData.password, salt);
+
+        userData.password = hash;
+
+        const user = User.build(userData)
+
+        user.save()
+    
+        let token = generateToken(user, res)
+    
+        return res.status(201).json({ jwtToken: token })
     }
 
-    const user = User.build(userData)
-
-    try {
-        await user.save()
-    } catch (err) {
-        return res.status(400).send('Username or email already exist!')
-    }
-
-    let token = generateToken(user, res)
-
-    return res.status(201).json({ jwtToken: token })
 })
 
 router.post('/login', async (req: Request, res: Response) => {
     const { username, password }: FormInputs = req.body
 
-    const user = await User.findOne({ username: username, password: password })
+    const user = await User.findOne({ username: username })
 
-    if (!user) {
-        return res.status(404).send('User does not exist!')
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+        return res.status(400).send('Incorrect username or password')
     }
 
     let token = generateToken(user, res)
@@ -64,23 +83,22 @@ router.put('/:userId', async (req: Request, res: Response) => {
         return res.status(400).send('No user data sent!')
     }
     try {
-        await User.findByIdAndUpdate(req.params.userId, {$set: {...userData}})
+        await User.findByIdAndUpdate(req.params.userId, {
+            $set: { ...userData },
+        })
 
         return res.status(200).json({ message: 'User updated!' })
-
     } catch (err) {
         return res.status(400).send(err)
     }
 })
 
 router.delete('/me', async (req: Request, res: Response) => {
-
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = getPayloadFromToken(req)
 
     await User.findOneAndDelete({ username: decodedToken.username })
 
     return res.status(200).json({ message: 'User deleted!' })
-
 })
 
 export default router
