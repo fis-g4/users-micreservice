@@ -100,7 +100,7 @@ router.put('/:userId', async (req: Request, res: Response) => {
 router.delete('/me', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
-    await User.findOneAndDelete({ data: decodedToken.username })
+    await User.findOneAndDelete({ username: decodedToken.username })
 
     return res.status(200).json({ message: 'User deleted!' })
 })

@@ -32,7 +32,7 @@ describe(`GET ${testUrls.usersMe}`, () => {
     beforeAll(async () => {
         const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.jwtToken
+        token = response.body.data
     })
 
     afterAll(async () => {
@@ -43,7 +43,7 @@ describe(`GET ${testUrls.usersMe}`, () => {
     it('Should return 200', async () => {
         const response = await request(BASE_URL).get(testUrls.usersMe).set('Authorization', `Bearer ${token}`)
         expect(response.statusCode).toBe(200)
-        expect(response.body.username).toBe(TEST_USER.username)
+        expect(response.body.data.username).toBe(TEST_USER.username)
     })
 
     it('Should return 401, with invalid token error', async () => {
@@ -77,83 +77,83 @@ describe(`POST ${testUrls.newUser}`, () => {
     it('Should return 201', async () => {
         const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.jwtToken
+        token = response.body.data
     })
 
     it('Should return 400, with short firstName error', async () => {
-        let TEST_USERShortFirstName = {...TEST_USER, firstName: 'T'}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERShortFirstName)
+        let testUserShortFirstName = {...TEST_USER, firstName: 'T'}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserShortFirstName)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.firstNameError)
+        expect(response.body.error).toBe(userErrors.firstNameError)
     })
 
     it('Should return 400, with long firstName error', async () => {
-        let TEST_USERLongFirstName = {...TEST_USER, firstName: 'ThisIsAFirstNameThatExtentTheLimitImposedByTheSystem'.repeat(41)}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERLongFirstName)
+        let testUserLongFirstName = {...TEST_USER, firstName: 'ThisIsAFirstNameThabody.errorentTheLimitImposedByTheSystem'.repeat(41)}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserLongFirstName)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.firstNameError)
+        expect(response.body.error).toBe(userErrors.firstNameError)
     })
 
     it('Should return 400, with short lastName error', async () => {
-        let TEST_USERShortLastName = {...TEST_USER, lastName: 'T'}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERShortLastName)
+        let testUserShortLastName = {...TEST_USER, lastName: 'T'}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserShortLastName)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.lastNameError)
+        expect(response.body.error).toBe(userErrors.lastNameError)
     })
 
     it('Should return 400, with long lastName error', async () => {
-        let TEST_USERLongLastName = {...TEST_USER, lastName: 'ThisIsALastNameThatExtentTheLimitImposedByTheSystem'.repeat(41)}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERLongLastName)
+        let testUserLongLastName = {...TEST_USER, lastName: 'ThisIsALastNameThabody.errorentTheLimitImposedByTheSystem'.repeat(41)}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserLongLastName)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.lastNameError)
+        expect(response.body.error).toBe(userErrors.lastNameError)
     })
 
     it('Should return 400, with short username error', async () => {
-        let TEST_USERShortUsername = {...TEST_USER, username: 'T'}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERShortUsername)
+        let testUserShortUsername = {...TEST_USER, username: 'T'}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserShortUsername)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.usernameError)
+        expect(response.body.error).toBe(userErrors.usernameError)
     })
 
     it('Should return 400, with long username error', async () => {
-        let TEST_USERLongUsername = {...TEST_USER, username: 'ThisIsAUsernameThatExtentTheLimitImposedByTheSystem'.repeat(41)}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERLongUsername)
+        let testUserLongUsername = {...TEST_USER, username: 'ThisIsAUsernameThabody.errorentTheLimitImposedByTheSystem'.repeat(41)}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserLongUsername)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.usernameError)
+        expect(response.body.error).toBe(userErrors.usernameError)
     })
 
     it('Should return 400, with invalid email format error', async () => {
-        let TEST_USERInvalidEmail = {...TEST_USER, email: 'invalidemail'}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERInvalidEmail)
+        let testUserInvalidEmail = {...TEST_USER, email: 'invalidemail'}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserInvalidEmail)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.invalidEmailFormatError)
+        expect(response.body.error).toBe(userErrors.invalidEmailFormatError)
     })
 
     it('Should return 400, with existing username error', async () => {
         const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.existingUsernameError)
+        expect(response.body.error).toBe(userErrors.existingUsernameError)
     })
 
     it('Should return 400, with existing username error', async () => {
-        let TEST_USERExistingUsername = {...TEST_USER, username: TEST_USER.username + "            "}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERExistingUsername)
+        let testUserExistingUsername = {...TEST_USER, username: TEST_USER.username + "            "}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserExistingUsername)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.existingUsernameError)
+        expect(response.body.error).toBe(userErrors.existingUsernameError)
     })
 
     it('Should return 400, with existing email error', async () => {
-        let TEST_USERExistingUsername = {...TEST_USER, username: "newUserName"}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERExistingUsername)
+        let testUserExistingUsername = {...TEST_USER, username: "newUserName"}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserExistingUsername)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.existingEmailError)
+        expect(response.body.error).toBe(userErrors.existingEmailError)
     })
 
     it('Should return 400, with invalid plan error', async () => {
-        let TEST_USERInvalidPlan = {...TEST_USER, username: "newUserName", email: "newemail@example.com", plan: 'invalidplan'}
-        const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USERInvalidPlan)
+        let testUserInvalidPlan = {...TEST_USER, username: "newUserName", email: "newemail@example.com", plan: 'invalidplan'}
+        const response = await request(BASE_URL).post(testUrls.newUser).send(testUserInvalidPlan)
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.invalidPlanError)
+        expect(response.body.error).toBe(userErrors.invalidPlanError)
     })
 })
 
@@ -166,6 +166,7 @@ describe(`POST ${testUrls.login}`, () => {
     beforeAll(async () => {
         const response = await request(BASE_URL).post(testUrls.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
+        token = response.body.data
     })
 
     afterAll(async () => {
@@ -176,7 +177,6 @@ describe(`POST ${testUrls.login}`, () => {
     it('Should return 200', async () => {
         const response = await request(BASE_URL).post(testUrls.login).send({username: TEST_USER.username, password: TEST_USER.password})
         expect(response.statusCode).toBe(200)
-        token = response.body.jwtToken
     })
 
     it('Should return 200, username has spaces', async () => {
@@ -187,18 +187,18 @@ describe(`POST ${testUrls.login}`, () => {
     it('Should return 400, with invalid username error', async () => {
         const response = await request(BASE_URL).post(testUrls.login).send({username: TEST_USER.username + "invalid", password: TEST_USER.password})
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.invalidUsernameOrPasswordError)
+        expect(response.body.error).toBe(userErrors.invalidUsernameOrPasswordError)
     })
 
     it('Should return 400, with invalid password error', async () => {
         const response = await request(BASE_URL).post(testUrls.login).send({username: TEST_USER.username, password: TEST_USER.password + "invalid"})
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.invalidUsernameOrPasswordError)
+        expect(response.body.error).toBe(userErrors.invalidUsernameOrPasswordError)
     })
 
     it('Should return 400, with invalid password error', async () => {
         const response = await request(BASE_URL).post(testUrls.login).send({username: TEST_USER.username, password: TEST_USER.password + "        "})
         expect(response.statusCode).toBe(400)
-        expect(response.text).toBe(userErrors.invalidUsernameOrPasswordError)
+        expect(response.body.error).toBe(userErrors.invalidUsernameOrPasswordError)
     })
 })
