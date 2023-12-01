@@ -3,6 +3,7 @@ import { IUser, PlanType, User } from '../db/models/user'
 import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
 import { validateUser } from '../utils/validators/userValidator'
 import bcrypt from 'bcrypt'
+import { userErrors } from '../utils/errorMessages/users'
 
 const router = express.Router()
 
@@ -68,7 +69,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const user = await User.findOne({ username: username })
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-        return res.status(400).send('Incorrect username or password')
+        return res.status(400).send(userErrors.invalidUsernameOrPasswordError)
     }
 
     let token = generateToken(user, res)
