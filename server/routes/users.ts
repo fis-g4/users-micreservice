@@ -5,10 +5,15 @@ import { validateUser } from '../utils/validators/userValidator'
 import bcrypt from 'bcrypt'
 import { userErrors } from '../utils/errorMessages/users'
 
+interface FormInputs {
+    username: string
+    password: string
+}
+
 const router = express.Router()
 
-const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS || "10");
-const salt = bcrypt.genSaltSync(SALT_ROUNDS);
+const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS || '10')
+const salt = bcrypt.genSaltSync(SALT_ROUNDS)
 
 const EMPTY_USER: IUser = {
     firstName: '',
@@ -42,25 +47,23 @@ router.post('/new', async (req: Request, res: Response) => {
 
     userData = { ...EMPTY_USER, ...userData }
 
-    await validateUser(userData, res);
+    await validateUser(userData, res)
 
     if (res.statusCode !== 200) {
-        return res;
-    }else{
+        return res
+    } else {
+        const hash = bcrypt.hashSync(userData.password, salt)
 
-        const hash = bcrypt.hashSync(userData.password, salt);
-
-        userData.password = hash;
+        userData.password = hash
 
         const user = User.build(userData)
 
         user.save()
-    
+
         let token = generateToken(user, res)
-    
+
         return res.status(201).json({ jwtToken: token })
     }
-
 })
 
 router.post('/login', async (req: Request, res: Response) => {

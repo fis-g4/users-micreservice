@@ -1,8 +1,12 @@
+import dotenv from "dotenv";
 import request from 'supertest'
 import { PlanType } from '../db/models/user'
 import { userErrors } from '../utils/errorMessages/users'
+import { jwtErrors } from '../utils/errorMessages/jwt';
 
-const BASE_URL = process.env.TESTING_API_BASE_URL ?? 'http://localhost:8000';
+dotenv.config();
+
+const BASE_URL = process.env.TESTING_API_BASE_URL ?? '';
 
 const testUrls = {
     login: '/users/login',
@@ -41,7 +45,23 @@ describe(`GET ${testUrls.usersMe}`, () => {
         expect(response.statusCode).toBe(200)
         expect(response.body.username).toBe(TEST_USER.username)
     })
+
+    it('Should return 401, with invalid token error', async () => {
+        const response = await request(BASE_URL).get(testUrls.usersMe).set('Authorization', `Bearer ${token}invalid`)
+        expect(response.statusCode).toBe(401)
+        expect(response.body.error).toBe(jwtErrors.invalidTokenError)
+    })
+
+    it('Should return 401, with no token error', async () => {
+        const response = await request(BASE_URL).get(testUrls.usersMe)
+        expect(response.statusCode).toBe(401)
+        expect(response.body.error).toBe(jwtErrors.tokenNeededError)
+    })
 })
+
+// ---------------------------- GET OTHERS DATA ----------------------------
+
+
 
 // ---------------------------- NEW USER ----------------------------
 
