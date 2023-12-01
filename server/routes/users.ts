@@ -12,7 +12,7 @@ interface FormInputs {
 
 const router = express.Router()
 
-const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS || '10')
+const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS ?? '10')
 const salt = bcrypt.genSaltSync(SALT_ROUNDS)
 
 const EMPTY_USER: IUser = {
@@ -29,17 +29,17 @@ router.get('/me', async (req: Request, res: Response) => {
 
     const user = await User.findOne({ username: decodedToken.username })
 
-    return res.status(200).json(user)
+    return res.status(200).json({ data: user })
 })
 
 router.get('/:userId', async (req: Request, res: Response) => {
     const user = await User.findById(req.params.userId).select('-password')
 
     if (!user) {
-        return res.status(404).send('User does not exist!')
+        return res.status(404).send({ error: 'User does not exist!' })
     }
 
-    return res.status(200).json(user)
+    return res.status(200).json({ data: user })
 })
 
 router.post('/new', async (req: Request, res: Response) => {
@@ -61,8 +61,8 @@ router.post('/new', async (req: Request, res: Response) => {
         user.save()
 
         let token = generateToken(user, res)
-
-        return res.status(201).json({ jwtToken: token })
+    
+        return res.status(201).json({ data: token })
     }
 })
 
@@ -72,19 +72,19 @@ router.post('/login', async (req: Request, res: Response) => {
     const user = await User.findOne({ username: username })
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-        return res.status(400).send(userErrors.invalidUsernameOrPasswordError)
+        return res.status(400).send({ error: userErrors.invalidUsernameOrPasswordError })
     }
 
     let token = generateToken(user, res)
 
-    return res.status(200).json({ jwtToken: token })
+    return res.status(200).json({ data: token })
 })
 
 router.put('/:userId', async (req: Request, res: Response) => {
     const userData: object = req.body
 
     if (!userData) {
-        return res.status(400).send('No user data sent!')
+        return res.status(400).send({ error: 'No user data sent!' })
     }
     try {
         await User.findByIdAndUpdate(req.params.userId, {
@@ -93,14 +93,14 @@ router.put('/:userId', async (req: Request, res: Response) => {
 
         return res.status(200).json({ message: 'User updated!' })
     } catch (err) {
-        return res.status(400).send(err)
+        return res.status(400).send({ error: err ?? 'Something went wrong while updating the user' })
     }
 })
 
 router.delete('/me', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
-    await User.findOneAndDelete({ username: decodedToken.username })
+    await User.findOneAndDelete({ data: decodedToken.username })
 
     return res.status(200).json({ message: 'User deleted!' })
 })
