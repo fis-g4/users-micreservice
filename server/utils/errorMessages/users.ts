@@ -6,7 +6,11 @@ const userErrors = {
     existingUsernameError: 'There is already a user with that username',
     existingEmailError: 'There is already a user with that email',
     invalidPlanError: 'The plan assigned to the user is not valid',
+    invalidRoleError: 'The role assigned to the user is not valid',
     invalidUsernameOrPasswordError: 'The username or password is incorrect',
+    userNotExistError: 'User does not exist!',
+    noUserDataError: 'No user data sent!',
+    cannotUpdateUserError: 'You are not authorized to update this user',
 }
 
 export { userErrors }

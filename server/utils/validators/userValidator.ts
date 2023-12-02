@@ -1,10 +1,11 @@
-import { IUser, PlanType, User } from '../../db/models/user'
+import { IUser, PlanType, User, UserRole } from '../../db/models/user'
 import { Response } from 'express'
 import { userErrors } from '../errorMessages/users'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-async function validateUser(user: IUser, res: Response) {
+async function validateUser(user: IUser, res: Response, updating: boolean = false) {
+
     if (!user) {
         res.status(400).send({ error: 'No user data sent!' })
     } else if (
@@ -25,13 +26,15 @@ async function validateUser(user: IUser, res: Response) {
     } else if (!EMAIL_REGEX.test(user.email.trim())) {
         res.status(400).send({ error: userErrors.invalidEmailFormatError })
     } else if (
-        (await User.findOne({ username: user.username.trim() })) !== null
+        (await User.findOne({ username: user.username.trim() })) !== null && !updating
     ) {
         res.status(400).send({ error: userErrors.existingUsernameError })
-    } else if ((await User.findOne({ email: user.email.trim() })) !== null) {
+    } else if ((await User.findOne({ email: user.email.trim() })) !== null && !updating) {
         return res.status(400).send({ error: userErrors.existingEmailError })
     } else if (!Object.values(PlanType).includes(user.plan)) {
         res.status(400).send({ error: userErrors.invalidPlanError })
+    } else if (!Object.values(UserRole).includes(user.role)) {
+        res.status(400).send({ error: userErrors.invalidRoleError })
     }
 }
 
