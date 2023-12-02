@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt'
 
 const router = express.Router()
 
-const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS || "10");
+const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS ?? "10");
 const salt = bcrypt.genSaltSync(SALT_ROUNDS);
 
 const EMPTY_USER: IUser = {
