@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import * as jwt from 'jsonwebtoken'
 import { IUser } from '../db/models/user'
+import { jwtErrors } from './errorMessages/jwt'
 
 const JWT_SECRET: string = process.env.JWT_SECRET ?? ''
 const JWT_EXPIRATION_TIME: string = process.env.JWT_EXPIRATION_TIME ?? ''
@@ -23,7 +24,7 @@ function generateToken(payload: object, res: Response) {
     })
 
     if (token === '') {
-        res.status(500).json({message: 'Error generating token!'})
+        res.status(500).json({error: jwtErrors.generatingTokenError})
     } else {
         return token
     }
@@ -39,7 +40,7 @@ function verifyToken(
 
     if (typeof bearerHeader === 'undefined') {
         if (!isAllowedUrl) {
-            res.status(401).json({message: 'You need to provide an authorization token to use this endpoint'})
+            res.status(401).json({error: jwtErrors.tokenNeededError})
         }
         return undefined
     } else {
@@ -55,11 +56,11 @@ function verifyToken(
             return payload;
         } catch (err) {
             if (err instanceof jwt.TokenExpiredError) {
-                res.status(401).json({message: 'Token expired!'})
+                res.status(401).json({error: jwtErrors.tokenExpiredError})
             } else if (err instanceof jwt.JsonWebTokenError) {
-                res.status(401).json({message: 'Invalid token!'})
+                res.status(401).json({error: jwtErrors.invalidTokenError})
             } else {
-                res.status(500).json({message: 'Error verifying token!'})
+                res.status(500).json({error: jwtErrors.verifyTokenError})
             }
             return undefined;
         }

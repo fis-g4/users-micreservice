@@ -1,4 +1,4 @@
-import { PlanType, User } from './models/user';
+import { PlanType, User, UserRole } from './models/user';
 import bcrypt from 'bcrypt';
 
 const SALT_ROUNDS: number = parseInt(process.env.SALT_ROUNDS || "10");
@@ -13,6 +13,7 @@ function populateUsers() {
         password: bcrypt.hashSync('maria123', salt),
         email: 'maria@example.com',
         plan: PlanType.FREE,
+        role: UserRole.USER,
     }).save();
     
     User.build({
@@ -22,6 +23,17 @@ function populateUsers() {
         password: bcrypt.hashSync('john123', salt),
         email: 'juan@example.com',
         plan: PlanType.PREMIUM,
+        role: UserRole.USER,
+    }).save();
+
+    User.build({
+        firstName: 'Admin',
+        lastName: 'User',
+        username: process.env.ADMIN_USERNAME || 'admin',
+        password: bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'password', salt),
+        email: process.env.ADMIN_EMAIL || 'admin@example.com',
+        plan: PlanType.PRO,
+        role: UserRole.ADMIN,
     }).save();
 }
 
