@@ -8,7 +8,13 @@ enum PlanType{
     PRO = 'PRO'
 }
 
+enum UserRole{
+    USER = 'USER',
+    ADMIN = 'ADMIN'
+}
+
 interface IUser {
+    [key: string]: any
     _id?: ObjectId
     firstName: string
     lastName: string
@@ -16,6 +22,7 @@ interface IUser {
     password: string
     email: string
     plan: PlanType
+    role: UserRole
 }
 
 interface UserDoc extends mongoose.Document {
@@ -26,6 +33,7 @@ interface UserDoc extends mongoose.Document {
     password: string
     email: string
     plan: PlanType
+    role: UserRole
 }
 
 interface UserModelInterface extends mongoose.Model<UserDoc> {
@@ -68,6 +76,13 @@ const userSchema = new Schema(
             trim: true,
         },
 
+        role: {
+            type: String,
+            enum: Object.values(UserRole),
+            default: UserRole.USER,
+            trim: true,
+        }
+
     },
     {
         virtuals: {
@@ -86,4 +101,4 @@ userSchema.statics.build = (user: IUser) => {
 
 const User = mongoose.model<UserDoc, UserModelInterface>('User', userSchema)
 
-export { User, IUser, PlanType }
+export { User, IUser, PlanType, UserRole }
