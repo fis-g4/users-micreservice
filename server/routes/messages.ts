@@ -21,6 +21,10 @@ router.post('/messages/new', async (req: Request, res: Response) => {
         return res.status(400).send({error: messagesErrors.emptyMessageError})
     }
 
+    if (messageData?.date) {
+        messageData.date = new Date(Date.now())
+    }
+
     try{
       const message = Message.build(messageData)
       if (message.receivers.length !== message.has_been_opened.length || message.receivers.length !== message.deleted_by_receiver.length) {
@@ -29,7 +33,7 @@ router.post('/messages/new', async (req: Request, res: Response) => {
       if (message.receivers.indexOf(message.sender) !== -1) {
           return res.status(400).send({error: messagesErrors.invalidMessageDataError})
       }
-      if (message.sender !== user.id) {
+      if (message.sender !== user.username) {
           return res.status(400).send({error: messagesErrors.invalidSenderError})
       }
       if (message.has_been_opened.includes(true) || message.deleted_by_receiver.includes(true) || message.deleted_by_sender) {
@@ -57,13 +61,13 @@ router.patch('/messages/:messageId/open', async (req: Request, res: Response) =>
         if (!message) {
             return res.status(404).send({error: messagesErrors.invalidMessageError})
         }
-        if (message.receivers.indexOf(user.id) === -1) {
+        if (message.receivers.indexOf(user.username) === -1) {
             return res.status(400).send({error: messagesErrors.invalidOpenError})
         }
-        if (message.has_been_opened[message.receivers.indexOf(user.id)]) {
+        if (message.has_been_opened[message.receivers.indexOf(user.username)]) {
             return res.status(400).send({error: messagesErrors.invalidOpenError})
         }
-        message.has_been_opened[message.receivers.indexOf(user.id)] = true;
+        message.has_been_opened[message.receivers.indexOf(user.username)] = true;
         Message.updateOne({ _id: req.params.messageId }, message).then(() => {
             return res.status(200).json({ message: 'Message opened!' })
         }).catch((err) => {
@@ -92,7 +96,7 @@ router.patch('/messages/:messageId', async (req: Request, res: Response) => {
         if (!message) {
             return res.status(404).send({error: messagesErrors.invalidMessageError})
         }
-        if (message.sender !== user.id) {
+        if (message.sender !== user.username) {
             return res.status(400).send({error: messagesErrors.invalidUpdateError})
         }
         if (message.has_been_opened.includes(true) || message.deleted_by_receiver.includes(true)) {
@@ -129,19 +133,19 @@ router.delete('/messages/:messageId', async (req: Request, res: Response) => {
         if (!message) {
             return res.status(404).send({error: messagesErrors.invalidMessageError})
         }
-        if (message.sender !== user.id && message.receivers.indexOf(user.id) === -1) {
+        if (message.sender !== user.username && message.receivers.indexOf(user.username) === -1) {
             return res.status(400).send({error: messagesErrors.invalidDeleteError})
         }
-        if (message.sender === user.id) {
+        if (message.sender === user.username) {
             if (message.deleted_by_sender) {
                 return res.status(400).send({error: messagesErrors.previousDeleteError})
             }
             message.deleted_by_sender = true;
         } else {
-            if (message.deleted_by_receiver[message.receivers.indexOf(user.id)]) {
+            if (message.deleted_by_receiver[message.receivers.indexOf(user.username)]) {
                 return res.status(400).send({error: messagesErrors.previousDeleteError})
             }
-            message.deleted_by_receiver[message.receivers.indexOf(user.id)] = true;
+            message.deleted_by_receiver[message.receivers.indexOf(user.username)] = true;
         }
         Message.updateOne({ _id: req.params.messageId }, message).then(() => {
             return res.status(200).json({ message: 'Message deleted!' })
@@ -172,15 +176,15 @@ router.get('/me/messages', async (req: Request, res: Response) => {
         limit = DEFAULT_LIMIT;
     }
 
-    Message.find({ $or: [{ $and: [{ sender: user.id }, { deleted_by_sender: false}]}, { $and: [{ receivers: user.id }, { deleted_by_receiver: false } ]}] }).sort({date: sort}).then((messages: Array<IMessage>) => {
-        messages = messages.filter(message => message.sender === user.id || (message.receivers.includes(user.id) && !message.deleted_by_receiver[message.receivers.indexOf(user.id)]))
+    Message.find({ $or: [{ $and: [{ sender: user.username }, { deleted_by_sender: false}]}, { $and: [{ receivers: user.username }, { deleted_by_receiver: false } ]}] }).sort({date: sort}).then((messages: Array<IMessage>) => {
+        messages = messages.filter(message => message.sender === user.username || (message.receivers.includes(user.username) && !message.deleted_by_receiver[message.receivers.indexOf(user.username)]))
         
         if (filter === "UNREAD") {
-            messages = messages.filter(message => message.receivers.includes(user.id) && !message.has_been_opened[message.receivers.indexOf(user.id)])
+            messages = messages.filter(message => message.receivers.includes(user.username) && !message.has_been_opened[message.receivers.indexOf(user.username)])
         } else if (filter === "SENT") {
-            messages = messages.filter(message => message.sender === user.id)
+            messages = messages.filter(message => message.sender === user.username)
         } else if (filter === "RECEIVED") {
-            messages = messages.filter(message => message.sender !== user.id)
+            messages = messages.filter(message => message.sender !== user.username)
         }
 
         total = messages.length;
