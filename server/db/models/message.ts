@@ -35,14 +35,14 @@ const messageSchema = new Schema({
         type: String,
         required: true,
         minLength: 1,
-        maxLength: 100,
+        maxLength: 128,
         trim: true
     },
     message: {
         type: String,
         required: true,
         minLength: 1,
-        maxLength: 1000,
+        maxLength: 10500,
         trim: true
     },
     sender: {
