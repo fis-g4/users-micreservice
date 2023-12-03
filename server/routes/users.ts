@@ -120,6 +120,18 @@ router.post('/login', async (req: Request, res: Response) => {
 
 // ------------------ PUT ROUTES ------------------
 
+router.put('/me', async (req: Request, res: Response) => {
+
+    let decodedToken: IUser = getPayloadFromToken(req)
+
+    updateUser(decodedToken.username, req.body, res).then(() => {
+        return res
+    }).catch((err) => {
+        return res.status(400).send({ error: err })
+    })
+
+})
+
 router.put('/:username', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
@@ -127,13 +139,34 @@ router.put('/:username', async (req: Request, res: Response) => {
         return res.status(401).send({ error: userErrors.cannotUpdateUserError })
     }
 
-    let userData = req.body
+    updateUser(req.params.username, req.body, res).then(() => {
+        return res
+    }).catch((err) => {
+        return res.status(400).send({ error: err })
+    })
+})
+
+// ------------------ DELETE ROUTES ------------------
+
+router.delete('/me', async (req: Request, res: Response) => {
+    let decodedToken: IUser = getPayloadFromToken(req)
+
+    User.findOneAndDelete({ username: decodedToken.username })
+        .then(() => {
+            return res.status(200).json({ message: 'User deleted!' })
+        })
+        .catch((err) => {
+            return res.status(400).send({ error: userErrors.userNotExistError })
+        })
+})
+
+async function updateUser(username: string, userData: any, res: Response){
 
     if (!userData) {
         return res.status(400).send({ error: userErrors.noUserDataError })
     }
 
-    User.findOne({ username: req.params.username })
+    User.findOne({ username: username })
         .then(async (user: IUser | null) => {
             if (!user) {
                 return res
@@ -188,7 +221,7 @@ router.put('/:username', async (req: Request, res: Response) => {
                         .send({ error: userErrors.existingEmailError })
                 }
 
-                User.updateOne({ username: req.params.username }, user)
+                User.updateOne({ username: username }, user)
                     .then(() => {
                         return res
                             .status(200)
@@ -213,20 +246,6 @@ router.put('/:username', async (req: Request, res: Response) => {
                         err ?? 'Something went wrong while updating the user',
                 })
         })
-})
-
-// ------------------ DELETE ROUTES ------------------
-
-router.delete('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
-
-    User.findOneAndDelete({ username: decodedToken.username })
-        .then(() => {
-            return res.status(200).json({ message: 'User deleted!' })
-        })
-        .catch((err) => {
-            return res.status(400).send({ error: userErrors.userNotExistError })
-        })
-})
+}
 
 export default router
