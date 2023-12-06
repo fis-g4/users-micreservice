@@ -306,6 +306,12 @@ router.patch('/messages/:messageId/open', async (req: Request, res: Response) =>
  *         schema:
  *           type: string
  *         description: The id of the message
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Message'
  *     responses:
  *       200:
  *         description: The message was successfully updated
