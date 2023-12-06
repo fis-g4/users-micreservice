@@ -23,29 +23,39 @@ const swaggerOptions = {
         openapi: '3.1.0',
         info: {
             version: "1.0.0",
-            title: "API Microservicio Usuarios", 
-            description: "API del microservicio de usuarios para la asignatura de Fundamentos de Ingeniería del Software.",
-            contact: [
-                {
-                    name: "Francisco Javier Cavero López",
-                    email: "fcavero@us.es",
-                    url: "https://github.com/javiercavlop"
-                },
-                {
-                    name: "Alejandro García Fernández",
-                    email: "agarcia29@us.es",
-                    url: "https://github.com/Alex-GF"
-                },
-            ],
+            title: "Users Microservice API", 
+            description: "API for the users microservice of the FIS-G4 project.",
+            contact: {
+                name: "Francisco Javier Cavero López & Alejandro García Fernández",
+                email: "",
+                url: "https://github.com/fis-g4/users-microservice"
+            },
             license: {
                 name: "MIT",
                 url: "https://opensource.org/licenses/MIT"
             }
         },
-        servers: [process.env.BASE_URL ?? "http://localhost:8000"]
+        servers: [
+            {
+                url: process.env.BASE_URL ?? "http://localhost:8000/users"
+            }
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT"
+                }
+            }
+        },
+        security: [
+            {
+                bearerAuth: []
+            }
+        ],
     },
-    basePath: "/",
-    apis: ["./routes/*.js"]
+    apis: ["./routes/*.ts"],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);

@@ -12,37 +12,167 @@ const DEFAULT_LIMIT = 25;
  * @swagger
  * components:
  *   schemas:
- *     Book:
+ *     Message:
  *       type: object
  *       required:
- *         - title
- *         - author
- *         - finished
+ *         - subject
+ *         - message
+ *         - sender
+ *         - receivers
+ *         - has_been_opened
+ *         - deleted_by_receiver
  *       properties:
  *         id:
  *           type: string
- *           description: The auto-generated id of the book
- *         title:
+ *           description: The auto-generated id of the message
+ *         subject:
  *           type: string
- *           description: The title of your book
- *         author:
+ *           description: The subject of your message
+ *         message:
  *           type: string
- *           description: The book author
- *         finished:
+ *           description: The text of your message
+ *         sender:
+ *           type: string
+ *           description: The username of the sender
+ *         receivers:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: The usernames of the receivers
+ *         has_been_opened:
+ *           type: array
+ *           items:
+ *             type: boolean
+ *           description: Whether the receivers has opened the message
+ *         deleted_by_sender:
  *           type: boolean
- *           description: Whether you have finished reading the book
- *         createdAt:
+ *           description: Whether the sender has deleted the message from their inbox
+ *         deleted_by_receiver:
+ *           type: array
+ *           items:
+ *             type: boolean
+ *           description: Whether the receivers has deleted the message from their inbox
+ *         date:
  *           type: string
- *           format: date
- *           description: The date the book was added
+ *           format: date-time
+ *           description: The date the message was added
  *       example:
- *         id: d5fE_asz
- *         title: The New Turing Omnibus
- *         author: Alexander K. Dewdney
- *         finished: false
- *         createdAt: 2020-03-10T04:05:06.157Z
+ *         id: 5f748650b547644a7c8a6d0d
+ *         subject: Hello!
+ *         message: How are you?
+ *         sender: user1
+ *         receivers: [user2, user3]
+ *         has_been_opened: [true, false]
+ *         deleted_by_sender: false
+ *         deleted_by_receiver: [false, false]
+ *         date: 2023-12-04T00:00:00.000Z
+ *     MessagesList:
+ *       type: object
+ *       required:
+ *         - data
+ *       properties:
+ *         data:
+ *           type: object
+ *           required:
+ *             - messages
+ *             - total
+ *           properties:
+ *             messages:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Message'
+ *             total:
+ *               type: integer
+ *               example: 10
+ *     OK2XX:
+ *       type: object
+ *       required:
+ *         - message
+ *       properties:
+ *         message: string
+ *       example:
+ *         message: The request was successful
+ *     Error400:
+ *       type: object
+ *       required:
+ *         - error
+ *       properties:
+ *         error: string
+ *       example:
+ *         error: Bad request
+ *     Error401:
+ *       type: object
+ *       required:
+ *         - error
+ *       properties:
+ *         error: string
+ *       example:
+ *         error: Unauthorized
+ *     Error404:
+ *       type: object
+ *       required:
+ *         - error
+ *       properties:
+ *         error: string
+ *       example:
+ *         error: Not found
+ *     Error500:
+ *       type: string
+ *       example:
+ *         Internal server error
  */
 
+/**
+ * @swagger
+ * tags:
+ *   name: Messages
+ *   description: The messages managing API
+ */
+
+/**
+ * @swagger
+ * /messages/new:
+ *   post:
+ *     summary: Create a new message
+ *     tags: [Messages]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Message'
+ *     responses:
+ *       201:
+ *         description: The message was successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.post('/messages/new', async (req: Request, res: Response) => {
     const messageData: IMessage = req.body
     let decodedToken: IUser = getPayloadFromToken(req);
@@ -77,12 +207,61 @@ router.post('/messages/new', async (req: Request, res: Response) => {
       if (message.receivers.length !== new Set(message.receivers).size) {
           return res.status(400).send({error: messagesErrors.invalidMessageDataError})
       }
+      if ((await User.find({ username: { $in: message.receivers } }).countDocuments()) !== message.receivers.length) {
+          return res.status(404).send({error: messagesErrors.userDoesNotExistError})
+      }
       await message.save()
     } catch (err) {
         return res.status(400).send({error: err ?? "There was an error creating the message"})
     }
     return res.status(201).json({ message: 'Message sent!' })
 })
+
+/**
+ * @swagger
+ * /messages/{messageId}/open:
+ *   patch:
+ *     summary: Checks a message as opened
+ *     tags: [Messages]
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The id of the message
+ *     responses:
+ *       200:
+ *         description: The message was successfully checked as opened
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 
 router.patch('/messages/:messageId/open', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req);
@@ -113,6 +292,52 @@ router.patch('/messages/:messageId/open', async (req: Request, res: Response) =>
     });
     
 })
+
+/**
+ * @swagger
+ * /messages/{messageId}:
+ *   patch:
+ *     summary: Enables to change the subject or the message of a message already sent
+ *     tags: [Messages]
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The id of the message
+ *     responses:
+ *       200:
+ *         description: The message was successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 
 router.patch('/messages/:messageId', async (req: Request, res: Response) => {
     const messageData: IMessage = req.body
@@ -156,6 +381,52 @@ router.patch('/messages/:messageId', async (req: Request, res: Response) => {
     
 })
 
+/**
+ * @swagger
+ * /messages/{messageId}:
+ *   delete:
+ *     summary: Checks a message as deleted
+ *     tags: [Messages]
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The id of the message
+ *     responses:
+ *       200:
+ *         description: The message was successfully checked as deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessagesList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
+
 router.delete('/messages/:messageId', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req);
     const user = await User.findOne({ username: decodedToken.username });
@@ -192,6 +463,68 @@ router.delete('/messages/:messageId', async (req: Request, res: Response) => {
     });
     
 })
+
+/**
+ * @swagger
+ * /messages/me?filter={filter}&sort={sort}&offset={offset}&limit={limit}:
+ *   get:
+ *     summary: Get all the messages of the user
+ *     tags: [Messages]
+ *     parameters:
+ *       - in: query
+ *         name: filter
+ *         description: Filter the messages
+ *         schema:
+ *           type: string
+ *           enum: [UNREAD, SENT, RECEIVED]
+ *       - in: query
+ *         name: sort
+ *         description: Sort the messages
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *       - in: query
+ *         name: offset
+ *         description: The number of messages to skip
+ *         schema:        
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         description: The number of messages to return. (If not customized, the default value will be 25)
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: The messages were successfully retrieved. The total number of messages before applying the offset and the limit to the final list is also returned (it can be useful for pagination)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessagesList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 
 router.get('/me/messages', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req);
