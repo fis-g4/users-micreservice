@@ -25,12 +25,216 @@ const EMPTY_USER: IUser = {
     role: UserRole.USER,
 }
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UserLogin:
+ *       type: object
+ *       required:
+ *         - username
+ *         - password
+ *       properties:
+ *         username:
+ *           type: string
+ *           description: The username of the user
+ *         password:
+ *           type: string
+ *           description: The password of the user
+ *       example:
+ *         username: johndoe
+ *         password: johnpassword
+ *     UserPost:
+ *       type: object
+ *       required:
+ *         - firstName
+ *         - lastName
+ *         - username
+ *         - password
+ *         - email
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           description: The first name of the user
+ *         lastName:
+ *           type: string
+ *           description: The last name of the user
+ *         username:
+ *           type: string
+ *           description: The username of the user
+ *         password:
+ *           type: string
+ *           description: The password of the user
+ *         email:
+ *           type: string
+ *           description: The email of the user
+ *           format: email
+ *         plan:
+ *           type: string
+ *           description: The plan of the user
+ *           enum: [FREE, PREMIUM, PRO]
+ *         role:
+ *           type: string
+ *           description: The role of the user
+ *           enum: [USER, ADMIN]
+ *       example:
+ *         firstName: John
+ *         lastName: Doe
+ *         username: johndoe
+ *         password: johnpassword
+ *         email: johndoe@test.com
+ *         plan: FREE
+ *         role: USER
+ *     UserPut:
+ *       type: object
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           description: The first name of the user
+ *         lastName:
+ *           type: string
+ *           description: The last name of the user
+ *         username:
+ *           type: string
+ *           description: The username of the user
+ *         password:
+ *           type: string
+ *           description: The password of the user
+ *         email:
+ *           type: string
+ *           description: The email of the user
+ *           format: email
+ *         plan:
+ *           type: string
+ *           description: The plan of the user
+ *           enum: [FREE, PREMIUM, PRO]
+ *         role:
+ *           type: string
+ *           description: The role of the user
+ *           enum: [USER, ADMIN]
+ *       example:
+ *         firstName: John
+ *         lastName: Doe
+ *         username: johndoe
+ *         password: johnpassword
+ *         email: johndoe@test.com
+ *         plan: FREE
+ *         role: USER
+ *     User:
+ *       type: object
+ *       required:
+ *         - firstName
+ *         - lastName
+ *         - username
+ *         - email
+ *         - plan
+ *         - role
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The auto-generated id of the user
+ *         firstName:
+ *           type: string
+ *           description: The first name of the user
+ *         lastName:
+ *           type: string
+ *           description: The last name of the user
+ *         username:
+ *           type: string
+ *           description: The username of the user
+ *         email:
+ *           type: string
+ *           description: The email of the user
+ *           format: email
+ *         plan:
+ *           type: string
+ *           description: The plan of the user
+ *           enum: [FREE, PREMIUM, PRO]
+ *         role:
+ *           type: string
+ *           description: The role of the user
+ *           enum: [USER, ADMIN]
+ *       example:
+ *         id: 60b0a1b7c9e8a1b9c8a1b9c8
+ *         firstName: John
+ *         lastName: Doe
+ *         username: johndoe
+ *         email: johndoe@test.com
+ *         plan: FREE
+ *         role: USER
+ *     UserList:
+ *       type: object
+ *       required:
+ *         - data
+ *       properties:
+ *         data:
+ *           type: object
+ *           description: The user
+ *           $ref: '#/components/schemas/User'
+ *     JWTList:
+ *       type: object
+ *       required:
+ *         - data
+ *       properties:
+ *         data:
+ *           type: string
+ *           description: The JWT token
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: The users managing API
+ */
+
+
 // ------------------ GET ROUTES ------------------
 
+/**
+ * @swagger
+ * /me:
+ *   get:
+ *     summary: Returns the info of the user that is logged in
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: The info was successfully retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.get('/me', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
     User.findOne({ username: decodedToken.username })
+        .select('-password')
         .then((user) => {
             if (!user) {
                 return res
@@ -49,6 +253,52 @@ router.get('/me', async (req: Request, res: Response) => {
         })
 })
 
+/**
+ * @swagger
+ * /{username}:
+ *   get:
+ *     summary: Returns the info of the user that has the username passed as parameter
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The username of the user to get
+ *         example: johndoe
+ *     responses:
+ *       200:
+ *         description: The info was successfully retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.get('/:username', async (req: Request, res: Response) => {
     User.findOne({ username: req.params.username })
         .select('-password')
@@ -71,7 +321,51 @@ router.get('/:username', async (req: Request, res: Response) => {
 })
 
 // ------------------ POST ROUTES ------------------
-
+/**
+ * @swagger
+ * /new:
+ *   post:
+ *     summary: Creates a new user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserPost'
+ *     security: []
+ *     responses:
+ *       201:
+ *         description: The user was successfully created (returns the JWT token)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/JWTList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.post('/new', async (req: Request, res: Response) => {
     let userData: IUser = req.body
 
@@ -96,6 +390,51 @@ router.post('/new', async (req: Request, res: Response) => {
     }
 })
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Logs in the user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserLogin'
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: The user was successfully logged in (returns the JWT token)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/JWTList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.post('/login', async (req: Request, res: Response) => {
     const { username, password }: FormInputs = req.body
 
@@ -119,7 +458,56 @@ router.post('/login', async (req: Request, res: Response) => {
 })
 
 // ------------------ PUT ROUTES ------------------
-
+/**
+ * @swagger
+ * /me:
+ *   put:
+ *     summary: Updates the info of the user that is logged in
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserPut'
+ *     responses:
+ *       200:
+ *         description: The info was successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       403:
+ *         description: The user that made the request has not enough privileges
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error403'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.put('/me', async (req: Request, res: Response) => {
 
     let decodedToken: IUser = getPayloadFromToken(req)
@@ -132,6 +520,64 @@ router.put('/me', async (req: Request, res: Response) => {
 
 })
 
+/**
+ * @swagger
+ * /{username}:
+ *   put:
+ *     summary: Updates the info of the user that has the username passed as parameter
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The username of the user to update
+ *         example: johndoe
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserPut'
+ *     responses:
+ *       200:
+ *         description: The info was successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       403:
+ *         description: The user that made the request has not enough privileges
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error403'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.put('/:username', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
@@ -147,7 +593,44 @@ router.put('/:username', async (req: Request, res: Response) => {
 })
 
 // ------------------ DELETE ROUTES ------------------
-
+/**
+ * @swagger
+ * /me:
+ *   delete:
+ *     summary: Deletes the user that is logged in
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: The user was successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 router.delete('/me', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
