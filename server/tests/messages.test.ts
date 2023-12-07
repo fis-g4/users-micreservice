@@ -13,11 +13,11 @@ const TEST_URLS = {
     login: '/users/login',
     newUser: '/users/new',
     usersMe: '/users/me',
-    newMessage: '/users/messages/new',
-    messagesUpdate: '/users/messages/:messageId',
-    messagesOpen: '/users/messages/:messageId/open',
+    newMessage: '/users/me/messages/new',
+    messagesUpdate: '/users/me/messages/:messageId',
+    messagesOpen: '/users/me/messages/:messageId/open',
     messagesMe: '/users/me/messages',
-    messagesDelete: '/users/messages/:messageId'
+    messagesDelete: '/users/me/messages/:messageId'
 }
 
 const TEST_USER_1 = {
@@ -87,7 +87,7 @@ describe(`GET ${TEST_URLS.messagesMe}`, () => {
         await mongoose
         .connect(`${process.env.DB_URI ?? ''}`,
         {
-            dbName: `${process.env.DB_NAME ?? ''}`,
+            dbName: `${process.env.DB_TEST_NAME ?? ''}`,
             user: `${process.env.DB_USER ?? ''}`,
             pass: `${process.env.DB_PASS ?? ''}`,
             authSource: `${process.env.AUTH_DB ?? ''}`,
@@ -214,7 +214,7 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
         await mongoose
         .connect(`${process.env.DB_URI ?? ''}`,
         {
-            dbName: `${process.env.DB_NAME ?? ''}`,
+            dbName: `${process.env.DB_TEST_NAME ?? ''}`,
             user: `${process.env.DB_USER ?? ''}`,
             pass: `${process.env.DB_PASS ?? ''}`,
             authSource: `${process.env.AUTH_DB ?? ''}`,
@@ -427,7 +427,7 @@ describe(`PATCH ${TEST_URLS.messagesOpen}`, () => {
         await mongoose
         .connect(`${process.env.DB_URI ?? ''}`,
         {
-            dbName: `${process.env.DB_NAME ?? ''}`,
+            dbName: `${process.env.DB_TEST_NAME ?? ''}`,
             user: `${process.env.DB_USER ?? ''}`,
             pass: `${process.env.DB_PASS ?? ''}`,
             authSource: `${process.env.AUTH_DB ?? ''}`,
@@ -509,7 +509,7 @@ describe(`PATCH ${TEST_URLS.messagesUpdate}`, () => {
         await mongoose
         .connect(`${process.env.DB_URI ?? ''}`,
         {
-            dbName: `${process.env.DB_NAME ?? ''}`,
+            dbName: `${process.env.DB_TEST_NAME ?? ''}`,
             user: `${process.env.DB_USER ?? ''}`,
             pass: `${process.env.DB_PASS ?? ''}`,
             authSource: `${process.env.AUTH_DB ?? ''}`,
@@ -623,7 +623,7 @@ describe(`DELETE ${TEST_URLS.messagesDelete}`, () => {
         await mongoose
         .connect(`${process.env.DB_URI ?? ''}`,
         {
-            dbName: `${process.env.DB_NAME ?? ''}`,
+            dbName: `${process.env.DB_TEST_NAME ?? ''}`,
             user: `${process.env.DB_USER ?? ''}`,
             pass: `${process.env.DB_PASS ?? ''}`,
             authSource: `${process.env.AUTH_DB ?? ''}`,
