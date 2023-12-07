@@ -234,6 +234,7 @@ router.get('/me', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
     User.findOne({ username: decodedToken.username })
+        .select('-password')
         .then((user) => {
             if (!user) {
                 return res

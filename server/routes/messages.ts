@@ -312,7 +312,7 @@ router.get('/me/messages', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /messages/new:
+ * /me/messages/new:
  *   post:
  *     summary: Create a new message
  *     tags: [Messages]
@@ -354,7 +354,7 @@ router.get('/me/messages', async (req: Request, res: Response) => {
  *             schema:
  *              $ref: '#/components/schemas/Error500'
  */
-router.post('/messages/new', async (req: Request, res: Response) => {
+router.post('/me/messages/new', async (req: Request, res: Response) => {
     const messageData: IMessage = req.body
     let decodedToken: IUser = getPayloadFromToken(req);
     const user = await User.findOne({ username: decodedToken.username });
@@ -400,7 +400,7 @@ router.post('/messages/new', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /messages/{messageId}/open:
+ * /me/messages/{messageId}/open:
  *   patch:
  *     summary: Checks a message as opened
  *     tags: [Messages]
@@ -445,7 +445,7 @@ router.post('/messages/new', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 
-router.patch('/messages/:messageId/open', async (req: Request, res: Response) => {
+router.patch('/me/messages/:messageId/open', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req);
     const user = await User.findOne({ username: decodedToken.username });
 
@@ -477,7 +477,7 @@ router.patch('/messages/:messageId/open', async (req: Request, res: Response) =>
 
 /**
  * @swagger
- * /messages/{messageId}:
+ * /me/messages/{messageId}:
  *   patch:
  *     summary: Enables to change the subject or the message of a message already sent
  *     tags: [Messages]
@@ -528,7 +528,7 @@ router.patch('/messages/:messageId/open', async (req: Request, res: Response) =>
  *              $ref: '#/components/schemas/Error500'
  */
 
-router.patch('/messages/:messageId', async (req: Request, res: Response) => {
+router.patch('/me/messages/:messageId', async (req: Request, res: Response) => {
     const messageData: IMessage = req.body
     let decodedToken: IUser = getPayloadFromToken(req);
     const user = await User.findOne({ username: decodedToken.username });
@@ -572,7 +572,7 @@ router.patch('/messages/:messageId', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /messages/{messageId}:
+ * /me/messages/{messageId}:
  *   delete:
  *     summary: Checks a message as deleted
  *     tags: [Messages]
@@ -617,7 +617,7 @@ router.patch('/messages/:messageId', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 
-router.delete('/messages/:messageId', async (req: Request, res: Response) => {
+router.delete('/me/messages/:messageId', async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req);
     const user = await User.findOne({ username: decodedToken.username });
 
