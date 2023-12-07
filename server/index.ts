@@ -55,7 +55,7 @@ const swaggerOptions = {
             }
         ],
     },
-    apis: ["./routes/*.ts"],
+    apis: ["./routes/users.ts", "./routes/messages.ts"],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
