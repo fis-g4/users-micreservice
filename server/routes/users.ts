@@ -701,6 +701,11 @@ async function updateUser(username: string, userData: any, res: Response) {
         return res.status(400).send({ error: userErrors.noUserDataError })
     }
 
+    // This is to avoid updating the username
+    if (userData.username) {
+        delete userData.username
+    }
+
     User.findOne({ username: username })
         .then(async (user: IUser | null) => {
             

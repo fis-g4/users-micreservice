@@ -14,10 +14,10 @@ app.use(express.json())
 app.use(cors())
 
 const URLS_ALLOWED_WITHOUT_TOKEN = [
-    '/users/login',
-    '/users/new',
-    '/docs/*',
-    '/',
+    '/v1/users/login',
+    '/v1/users/new',
+    '/v1/docs/*',
+    '/v1',
 ]
 
 const swaggerJsDoc = swaggerjsdoc
@@ -43,7 +43,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: process.env.BASE_URL ?? 'http://localhost:8000/users',
+                url: process.env.BASE_URL ?? 'http://localhost:8000/v1/users',
             },
         ],
         components: {
@@ -98,7 +98,7 @@ app.use((req, res, next) => {
     next()
 })
 
-app.get('/', (req: Request, res: Response) => {
+app.get('/v1', (req: Request, res: Response) => {
     res.send('Hello World From the Typescript Server!')
 })
 
@@ -108,10 +108,10 @@ app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
 
-app.use('/users', users)
-app.use('/users', messages)
+app.use('/v1/users', users)
+app.use('/v1/users', messages)
 app.use(
-    '/docs/',
+    '/v1/docs/',
     swaggerUI.serve,
     swaggerUI.setup(swaggerDocs, { explorer: true })
 )
