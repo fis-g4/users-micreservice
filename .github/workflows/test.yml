@@ -44,11 +44,11 @@ jobs:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
         with:
-          mongodb-version: ${{ vars.MONGODB_VERSION }}
-          mongodb-username: ${{ vars.MONGODB_USER }}
-          mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
-          mongodb-db: ${{ vars.MONGODB_NAME }}
-          mongodb-port: ${{ vars.MONGODB_PORT }}
+          mongodb-version: ${{ vars.CI_MONGODB_VERSION }}
+          mongodb-username: ${{ vars.CI_MONGODB_USER }}
+          mongodb-password: ${{ secrets.CI_MONGODB_PASSWORD }}
+          mongodb-db: ${{ vars.CI_MONGODB_NAME }}
+          mongodb-port: ${{ vars.CI_MONGODB_PORT }}
         
       - name: Install dependencies
         working-directory: ./server
