@@ -305,20 +305,20 @@ describe(`PUT ${TEST_URLS.usersUpdate}`, () => {
     })
 
     it('Should return 200', async () => {
-        const responseUpdate = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send({username: TEST_USER.username+"updated"}).set('Authorization', `Bearer ${adminToken}`)
-        console.log(responseUpdate.body.error)
+        const responseUpdate = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send({username: TEST_USER.username+"updated", firstName: TEST_USER.firstName+"updated"}).set('Authorization', `Bearer ${adminToken}`)
         expect(responseUpdate.statusCode).toBe(200)
         expect(responseUpdate.body.message).toBe("User updated!")
 
         const responseUserData = await request(BASE_URL).get(TEST_URLS.users.replace(":username", TEST_USER.username+"updated")).set('Authorization', `Bearer ${adminToken}`)
-        expect(responseUserData.statusCode).toBe(200)
+        expect(responseUserData.statusCode).toBe(404)
 
-        const responseUpdateReturn = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username+"updated")).send({username: TEST_USER.username}).set('Authorization', `Bearer ${adminToken}`)
-        expect(responseUpdateReturn.statusCode).toBe(200)
-        expect(responseUpdateReturn.body.message).toBe("User updated!")
+        const responseUserDataSecond = await request(BASE_URL).get(TEST_URLS.users.replace(":username", TEST_USER.username)).set('Authorization', `Bearer ${adminToken}`)
+        expect(responseUserDataSecond.statusCode).toBe(200)
+        expect(responseUserDataSecond.body.data.firstName).toBe(TEST_USER.firstName+"updated")
 
-        const responseUserDataReturn = await request(BASE_URL).get(TEST_URLS.users.replace(":username", TEST_USER.username)).set('Authorization', `Bearer ${adminToken}`)
-        expect(responseUserDataReturn.statusCode).toBe(200)
+        const responseUpdateReturn = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send({firstName: TEST_USER.firstName}).set('Authorization', `Bearer ${adminToken}`)
+        expect(responseUpdate.statusCode).toBe(200)
+        expect(responseUpdate.body.message).toBe("User updated!")
     })
 
     it('Should return 400, with short firstName error', async () => {
@@ -349,37 +349,11 @@ describe(`PUT ${TEST_URLS.usersUpdate}`, () => {
         expect(response.body.error).toBe(userErrors.lastNameError)
     })
 
-    it('Should return 400, with short username error', async () => {
-        let testUserShortUsername = {...TEST_USER, username: 'T'}
-        const response = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send(testUserShortUsername).set('Authorization', `Bearer ${adminToken}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.usernameError)
-    })
-
-    it('Should return 400, with long username error', async () => {
-        let testUserLongUsername = {...TEST_USER, username: 'ThisIsAUsernameThabody.errorentTheLimitImposedByTheSystem'.repeat(41)}
-        const response = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send(testUserLongUsername).set('Authorization', `Bearer ${adminToken}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.usernameError)
-    })
-
     it('Should return 400, with invalid email format error', async () => {
         let testUserInvalidEmail = {...TEST_USER, email: 'invalidemail'}
         const response = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send(testUserInvalidEmail).set('Authorization', `Bearer ${adminToken}`)
         expect(response.statusCode).toBe(400)
         expect(response.body.error).toBe(userErrors.invalidEmailFormatError)
-    })
-
-    it('Should return 400, with invalid username error', async () => {
-        const response = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send({username: USERS_TO_GET_DATA_FROM.firstUser.username}).set('Authorization', `Bearer ${adminToken}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.existingUsernameError)
-    })
-
-    it('Should return 400, with invalid username error', async () => {
-        const response = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send({username: USERS_TO_GET_DATA_FROM.firstUser.username+"       "}).set('Authorization', `Bearer ${adminToken}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.existingUsernameError)
     })
 
     it('Should return 400, with existing email error', async () => {
@@ -440,19 +414,23 @@ describe(`PUT ${TEST_URLS.usersMe}`, () => {
     })
 
     it('Should return 200', async () => {
-        const response = await request(BASE_URL).put(TEST_URLS.usersMe).send({username: TEST_USER.username+"updated"}).set('Authorization', `Bearer ${token}`)
+        const response = await request(BASE_URL).put(TEST_URLS.usersMe).send({username: TEST_USER.username+"updated", firstName: TEST_USER.firstName+"updated"}).set('Authorization', `Bearer ${token}`)
         expect(response.statusCode).toBe(200)
         expect(response.body.message).toBe("User updated!")
 
-        const responseLogin = await request(BASE_URL).post(TEST_URLS.login).send({username: TEST_USER.username+"updated", password: TEST_USER.password})
+        const responseLoginBad = await request(BASE_URL).post(TEST_URLS.login).send({username: TEST_USER.username+"updated", password: TEST_USER.password})
+        expect(responseLoginBad.statusCode).toBe(400)
+
+        const responseLogin = await request(BASE_URL).post(TEST_URLS.login).send({username: TEST_USER.username, password: TEST_USER.password})
         expect(responseLogin.statusCode).toBe(200)
         token = responseLogin.body.data
 
         const responseUserData = await request(BASE_URL).get(TEST_URLS.usersMe).set('Authorization', `Bearer ${token}`)
         expect(responseUserData.statusCode).toBe(200)
-        expect(responseUserData.body.data.username).toBe(TEST_USER.username+"updated")
+        expect(responseUserData.body.data.username).toBe(TEST_USER.username)
+        expect(responseUserData.body.data.firstName).toBe(TEST_USER.firstName+"updated")
 
-        const responseUpdateReturn = await request(BASE_URL).put(TEST_URLS.usersMe).send({username: TEST_USER.username}).set('Authorization', `Bearer ${token}`)
+        const responseUpdateReturn = await request(BASE_URL).put(TEST_URLS.usersMe).send({firstName: TEST_USER.firstName}).set('Authorization', `Bearer ${token}`)
         expect(responseUpdateReturn.statusCode).toBe(200)
         expect(responseUpdateReturn.body.message).toBe("User updated!")
         token = responseUpdateReturn.body.data
@@ -463,7 +441,7 @@ describe(`PUT ${TEST_URLS.usersMe}`, () => {
 
         const responseUserDataReturn = await request(BASE_URL).get(TEST_URLS.usersMe).set('Authorization', `Bearer ${token}`)
         expect(responseUserDataReturn.statusCode).toBe(200)
-        expect(responseUserDataReturn.body.data.username).toBe(TEST_USER.username)
+        expect(responseUserDataReturn.body.data.firstName).toBe(TEST_USER.firstName)
     })
 
     it('Should return 400, with short firstName error', async () => {
@@ -494,37 +472,11 @@ describe(`PUT ${TEST_URLS.usersMe}`, () => {
         expect(response.body.error).toBe(userErrors.lastNameError)
     })
 
-    it('Should return 400, with short username error', async () => {
-        let testUserShortUsername = {...TEST_USER, username: 'T'}
-        const response = await request(BASE_URL).put(TEST_URLS.usersMe).send(testUserShortUsername).set('Authorization', `Bearer ${token}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.usernameError)
-    })
-
-    it('Should return 400, with long username error', async () => {
-        let testUserLongUsername = {...TEST_USER, username: 'ThisIsAUsernameThabody.errorentTheLimitImposedByTheSystem'.repeat(41)}
-        const response = await request(BASE_URL).put(TEST_URLS.usersMe).send(testUserLongUsername).set('Authorization', `Bearer ${token}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.usernameError)
-    })
-
     it('Should return 400, with invalid email format error', async () => {
         let testUserInvalidEmail = {...TEST_USER, email: 'invalidemail'}
         const response = await request(BASE_URL).put(TEST_URLS.usersMe).send(testUserInvalidEmail).set('Authorization', `Bearer ${token}`)
         expect(response.statusCode).toBe(400)
         expect(response.body.error).toBe(userErrors.invalidEmailFormatError)
-    })
-
-    it('Should return 400, with invalid username error', async () => {
-        const response = await request(BASE_URL).put(TEST_URLS.usersMe).send({username: USERS_TO_GET_DATA_FROM.firstUser.username}).set('Authorization', `Bearer ${token}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.existingUsernameError)
-    })
-
-    it('Should return 400, with invalid username error', async () => {
-        const response = await request(BASE_URL).put(TEST_URLS.usersMe).send({username: USERS_TO_GET_DATA_FROM.firstUser.username+"       "}).set('Authorization', `Bearer ${token}`)
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(userErrors.existingUsernameError)
     })
 
     it('Should return 400, with existing email error', async () => {

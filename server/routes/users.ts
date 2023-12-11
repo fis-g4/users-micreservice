@@ -3,7 +3,27 @@ import { IUser, PlanType, User, UserRole } from '../db/models/user'
 import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
 import { validateUser } from '../utils/validators/userValidator'
 import bcrypt from 'bcrypt'
+import multer from 'multer'
+import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
+import {v4 as uuidv4} from 'uuid'
+
+const bucketUrl = process.env.GCS_BUCKET_URL ?? ''
+const bucketName = process.env.GCS_BUCKET_NAME ?? ''
+
+const storage = new Storage({
+    projectId: process.env.GCS_PROJECT_NAME ?? "",
+    keyFilename: '../GoogleCloudKey.json',
+})
+
+const bucket = storage.bucket(bucketName ?? '')
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5 MB
+    },
+})
 
 interface FormInputs {
     username: string
@@ -21,6 +41,8 @@ const EMPTY_USER: IUser = {
     username: '',
     password: '',
     email: '',
+    profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
+    coinsAmount: 0,
     plan: PlanType.FREE,
     role: UserRole.USER,
 }
@@ -189,7 +211,6 @@ const EMPTY_USER: IUser = {
  *   description: The users managing API
  */
 
-
 // ------------------ GET ROUTES ------------------
 
 /**
@@ -245,11 +266,9 @@ router.get('/me', async (req: Request, res: Response) => {
             return res.status(200).json({ data: user })
         })
         .catch((err) => {
-            return res
-                .status(400)
-                .send({
-                    error: err ?? 'Something went wrong while getting the user',
-                })
+            return res.status(400).send({
+                error: err ?? 'Something went wrong while getting the user',
+            })
         })
 })
 
@@ -312,11 +331,9 @@ router.get('/:username', async (req: Request, res: Response) => {
             return res.status(200).json({ data: user })
         })
         .catch((err) => {
-            return res
-                .status(400)
-                .send({
-                    error: err ?? 'Something went wrong while getting the user',
-                })
+            return res.status(400).send({
+                error: err ?? 'Something went wrong while getting the user',
+            })
         })
 })
 
@@ -436,6 +453,7 @@ router.post('/new', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.post('/login', async (req: Request, res: Response) => {
+
     const { username, password }: FormInputs = req.body
 
     User.findOne({ username: username })
@@ -508,16 +526,46 @@ router.post('/login', async (req: Request, res: Response) => {
  *             schema:
  *              $ref: '#/components/schemas/Error500'
  */
-router.put('/me', async (req: Request, res: Response) => {
-
+router.put('/me', upload.single("profilePicture"), async (req: Request, res: Response) => {
     let decodedToken: IUser = getPayloadFromToken(req)
 
-    updateUser(decodedToken.username, req.body, res).then(() => {
-        return res
-    }).catch((err) => {
-        return res.status(400).send({ error: err })
-    })
+    if (req.file) {
+        const blob = bucket.file(
+            uuidv4() + "-" + req.file.originalname
+        )
 
+        const blobStream = blob.createWriteStream({
+            resumable: false,
+        })
+
+        blobStream.on('error', (err) => {
+            return res.status(500).send({ error: err })
+        })
+
+        blobStream.on('finish', async () => {
+            const publicUrl = `${bucketUrl}/${bucket.name}/${blob.name}`
+
+            req.body.profilePicture = publicUrl
+
+            updateUser(decodedToken.username, req.body, res)
+                .then(() => {
+                    return res
+                })
+                .catch((err) => {
+                    return res.status(400).send({ error: err })
+                })
+        })
+
+        blobStream.end(req.file.buffer)
+    }else{
+        updateUser(decodedToken.username, req.body, res)
+        .then(() => {
+            return res
+        })
+        .catch((err) => {
+            return res.status(400).send({ error: err })
+        })
+    }
 })
 
 /**
@@ -585,11 +633,16 @@ router.put('/:username', async (req: Request, res: Response) => {
         return res.status(401).send({ error: userErrors.cannotUpdateUserError })
     }
 
-    updateUser(req.params.username, req.body, res).then(() => {
-        return res
-    }).catch((err) => {
-        return res.status(400).send({ error: err })
-    })
+    delete req.body.profilePicture
+    delete req.body.password
+
+    updateUser(req.params.username, req.body, res)
+        .then(() => {
+            return res
+        })
+        .catch((err) => {
+            return res.status(400).send({ error: err })
+        })
 })
 
 // ------------------ DELETE ROUTES ------------------
@@ -643,14 +696,19 @@ router.delete('/me', async (req: Request, res: Response) => {
         })
 })
 
-async function updateUser(username: string, userData: any, res: Response){
-
+async function updateUser(username: string, userData: any, res: Response) {
     if (!userData) {
         return res.status(400).send({ error: userErrors.noUserDataError })
     }
 
+    // This is to avoid updating the username
+    if (userData.username) {
+        delete userData.username
+    }
+
     User.findOne({ username: username })
         .then(async (user: IUser | null) => {
+            
             if (!user) {
                 return res
                     .status(404)
@@ -662,7 +720,6 @@ async function updateUser(username: string, userData: any, res: Response){
 
             for (let key in userData) {
                 if (
-                    userData.hasOwnProperty(key) &&
                     key !== 'password' &&
                     user[key] !== userData[key]
                 ) {
@@ -711,23 +768,18 @@ async function updateUser(username: string, userData: any, res: Response){
                             .json({ message: 'User updated!' })
                     })
                     .catch((err) => {
-                        return res
-                            .status(400)
-                            .send({
-                                error:
-                                    err ??
-                                    'Something went wrong while updating the user',
-                            })
+                        return res.status(400).send({
+                            error:
+                                err ??
+                                'Something went wrong while updating the user',
+                        })
                     })
             }
         })
         .catch((err) => {
-            return res
-                .status(400)
-                .send({
-                    error:
-                        err ?? 'Something went wrong while updating the user',
-                })
+            return res.status(400).send({
+                error: err ?? 'Something went wrong while updating the user',
+            })
         })
 }
 
