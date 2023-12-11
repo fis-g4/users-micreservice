@@ -306,7 +306,6 @@ describe(`PUT ${TEST_URLS.usersUpdate}`, () => {
 
     it('Should return 200', async () => {
         const responseUpdate = await request(BASE_URL).put(TEST_URLS.usersUpdate.replace(':username', TEST_USER.username)).send({username: TEST_USER.username+"updated"}).set('Authorization', `Bearer ${adminToken}`)
-        console.log(responseUpdate.body.error)
         expect(responseUpdate.statusCode).toBe(200)
         expect(responseUpdate.body.message).toBe("User updated!")
 

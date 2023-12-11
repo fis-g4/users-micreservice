@@ -21,6 +21,8 @@ interface IUser {
     username: string
     password: string
     email: string
+    profilePicture: string
+    coinsAmount: number
     plan: PlanType
     role: UserRole
 }
@@ -32,6 +34,8 @@ interface UserDoc extends mongoose.Document {
     username: string
     password: string
     email: string
+    profilePicture: string
+    coinsAmount: number
     plan: PlanType
     role: UserRole
 }
@@ -68,6 +72,14 @@ const userSchema = new Schema(
             unique: true,
             trim: true,
             //required: true,
+        },
+        profilePicture: {
+            type: String,
+            trim: true,
+        },
+        coinsAmount: {
+            type: Number,
+            default: 0,
         },
         plan: {
             type: String,
