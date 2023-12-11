@@ -6,13 +6,14 @@ import bcrypt from 'bcrypt'
 import multer from 'multer'
 import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
-import {v4 as uuidv4} from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
+import { GoogleAuth } from 'google-auth-library'
 
 const bucketUrl = process.env.GCS_BUCKET_URL ?? ''
 const bucketName = process.env.GCS_BUCKET_NAME ?? ''
 
 const storage = new Storage({
-    projectId: process.env.GCS_PROJECT_NAME ?? "",
+    projectId: process.env.GCS_PROJECT_NAME ?? '',
     keyFilename: '../GoogleCloudKey.json',
 })
 
@@ -23,6 +24,10 @@ const upload = multer({
     limits: {
         fileSize: 5 * 1024 * 1024, // 5 MB
     },
+})
+
+const authCredentials = new GoogleAuth({
+    keyFilename: '../GoogleCloudKey.json',
 })
 
 interface FormInputs {
@@ -41,7 +46,7 @@ const EMPTY_USER: IUser = {
     username: '',
     password: '',
     email: '',
-    profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
+    profilePicture: bucketUrl + '/' + bucketName + '/default-user.jpg',
     coinsAmount: 0,
     plan: PlanType.FREE,
     role: UserRole.USER,
@@ -453,26 +458,45 @@ router.post('/new', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.post('/login', async (req: Request, res: Response) => {
-
     const { username, password }: FormInputs = req.body
 
-    User.findOne({ username: username })
-        .then((user) => {
-            if (!user || !bcrypt.compareSync(password, user.password)) {
-                return res
-                    .status(400)
-                    .send({ error: userErrors.invalidUsernameOrPasswordError })
-            }
-
-            let token = generateToken(user, res)
-
-            return res.status(200).json({ data: token })
-        })
-        .catch((err) => {
+    User.findOne({ username: username }).then((user) => {
+        if (!user || !bcrypt.compareSync(password, user.password)) {
             return res
                 .status(400)
-                .send({ error: err ?? 'Something went wrong while logging in' })
-        })
+                .send({ error: userErrors.invalidUsernameOrPasswordError })
+        }
+
+        authCredentials
+            .getIdTokenClient(
+                'https://europe-southwest1-liquid-layout-406710.cloudfunctions.net/'
+            )
+            .then((client) => {
+                fetch(
+                    'https://europe-southwest1-liquid-layout-406710.cloudfunctions.net/fis-g4-jwt-generate',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + client.credentials.id_token,
+                        },
+                        body: JSON.stringify(user)
+                    }
+                )
+                    .then((token) => {
+
+                        console.log(token)
+
+                        return res.status(200).json({ data: token })
+                    })
+                    .catch((err) => {
+                        return res.status(400).send({
+                            error:
+                                err ?? 'Something went wrong while logging in',
+                        })
+                    })
+            })
+    })
 })
 
 // ------------------ PUT ROUTES ------------------
@@ -526,27 +550,39 @@ router.post('/login', async (req: Request, res: Response) => {
  *             schema:
  *              $ref: '#/components/schemas/Error500'
  */
-router.put('/me', upload.single("profilePicture"), async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+router.put(
+    '/me',
+    upload.single('profilePicture'),
+    async (req: Request, res: Response) => {
+        let decodedToken: IUser = getPayloadFromToken(req)
 
-    if (req.file) {
-        const blob = bucket.file(
-            uuidv4() + "-" + req.file.originalname
-        )
+        if (req.file) {
+            const blob = bucket.file(uuidv4() + '-' + req.file.originalname)
 
-        const blobStream = blob.createWriteStream({
-            resumable: false,
-        })
+            const blobStream = blob.createWriteStream({
+                resumable: false,
+            })
 
-        blobStream.on('error', (err) => {
-            return res.status(500).send({ error: err })
-        })
+            blobStream.on('error', (err) => {
+                return res.status(500).send({ error: err })
+            })
 
-        blobStream.on('finish', async () => {
-            const publicUrl = `${bucketUrl}/${bucket.name}/${blob.name}`
+            blobStream.on('finish', async () => {
+                const publicUrl = `${bucketUrl}/${bucket.name}/${blob.name}`
 
-            req.body.profilePicture = publicUrl
+                req.body.profilePicture = publicUrl
 
+                updateUser(decodedToken.username, req.body, res)
+                    .then(() => {
+                        return res
+                    })
+                    .catch((err) => {
+                        return res.status(400).send({ error: err })
+                    })
+            })
+
+            blobStream.end(req.file.buffer)
+        } else {
             updateUser(decodedToken.username, req.body, res)
                 .then(() => {
                     return res
@@ -554,19 +590,9 @@ router.put('/me', upload.single("profilePicture"), async (req: Request, res: Res
                 .catch((err) => {
                     return res.status(400).send({ error: err })
                 })
-        })
-
-        blobStream.end(req.file.buffer)
-    }else{
-        updateUser(decodedToken.username, req.body, res)
-        .then(() => {
-            return res
-        })
-        .catch((err) => {
-            return res.status(400).send({ error: err })
-        })
+        }
     }
-})
+)
 
 /**
  * @swagger
@@ -708,7 +734,6 @@ async function updateUser(username: string, userData: any, res: Response) {
 
     User.findOne({ username: username })
         .then(async (user: IUser | null) => {
-            
             if (!user) {
                 return res
                     .status(404)
@@ -719,10 +744,7 @@ async function updateUser(username: string, userData: any, res: Response) {
             let changedEmail = false
 
             for (let key in userData) {
-                if (
-                    key !== 'password' &&
-                    user[key] !== userData[key]
-                ) {
+                if (key !== 'password' && user[key] !== userData[key]) {
                     if (key === 'username') {
                         changedUsername = true
                     } else if (key === 'email') {
