@@ -41,7 +41,7 @@ jobs:
                   envkey_BASE_URL: ${{ vars.CI_BASE_URL }}
                   envkey_DB_TEST_NAME: ${{ vars.CI_MONGODB_TEST_NAME }}
                   envkey_GCS_PROJECT_NAME: ${{ vars.CI_GCS_PROJECT_NAME }}
-                  envkey_GCS_BUCKET_NAME: ${{ vars.CI_BUCKET_NAME }}
+                  envkey_GCS_BUCKET_NAME: ${{ vars.CI_GCS_BUCKET_NAME }}
                   envkey_GCS_BUCKET_URL: ${{ vars.CI_GCS_BUCKET_URL }}
                   directory: ./server
                   file_name: .env
