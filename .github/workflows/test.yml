@@ -18,7 +18,7 @@ jobs:
 
             - name: Load GCP Authentication
               run: |
-                  echo ${{ secrets.CD_GCP_CREDENTIALS }} >> ./GoogleCloudKey.json
+                  echo "${{ secrets.CD_GCP_CREDENTIALS }}" >> ./GoogleCloudKey.json
                   cat ./GoogleCloudKey.json
 
             - name: Make envfile
