@@ -43,6 +43,9 @@ jobs:
                   envkey_GCS_PROJECT_NAME: ${{ vars.CI_GCS_PROJECT_NAME }}
                   envkey_GCS_BUCKET_NAME: ${{ vars.CI_GCS_BUCKET_NAME }}
                   envkey_GCS_BUCKET_URL: ${{ vars.CI_GCS_BUCKET_URL }}
+                  envkey_GCF_GENERATE_TOKEN_ENDPOINT: ${{ vars.GCF_GENERATE_TOKEN_ENDPOINT }}
+                  envkey_GCF_VERIFY_TOKEN_ENDPOINT: ${{ vars.GCF_VERIFY_TOKEN_ENDPOINT }}
+                  envkey_GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT: ${{ vars.GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT }}
                   directory: ./server
                   file_name: .env
                   fail_on_empty: false
