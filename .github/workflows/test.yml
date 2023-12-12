@@ -19,6 +19,7 @@ jobs:
             - name: Load GCP Authentication
               run: |
                   echo ${{ secrets.CD_GCP_CREDENTIALS }} >> ./GoogleCloudKey.json
+                  cat ./GoogleCloudKey.json
 
             - name: Make envfile
               uses: SpicyPizza/create-envfile@v2.0
@@ -74,4 +75,4 @@ jobs:
 
             - name: Run tests
               working-directory: ./server
-              run: npm run test
+              run: npm test
