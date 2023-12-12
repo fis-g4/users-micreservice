@@ -81,7 +81,7 @@ app.use((req, res, next) => {
             next()
         }
     }).catch((err) => {
-        res.status(500).json({ error: err })
+        res.status(err.statusCode).json({ error: err.message })
     })
 
 })
