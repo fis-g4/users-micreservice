@@ -83,19 +83,26 @@ function isURLAllowedWithoutToken(url: string): boolean {
 }
 
 app.use((req, res, next) => {
-    let decodedToken = verifyToken(req, res, isURLAllowedWithoutToken(req.url))
 
-    if (decodedToken !== undefined) {
-        // Agregar el nuevo token al encabezado de la respuesta
-        res.setHeader(
-            'Authorization',
-            `Bearer ${generateToken(decodedToken as object, res)}`
-        )
-    } else if (res.statusCode !== 200) {
-        return res
-    }
+    let bearerHeader = req.headers['authorization'] as string;
+    let bearer: string[] = bearerHeader.split(' ')
+    let bearerToken: string = bearer[1]
 
-    next()
+    verifyToken(req.url, bearerToken).then((payload) => {
+        if (payload !== undefined) {
+            generateToken(payload).then((token) => {
+                res.setHeader('Authorization', `Bearer ${token}`)
+                next()
+            }).catch((err) => {
+                console.error(err)
+            })
+        }else{
+            next()
+        }
+    }).catch((err) => {
+        console.error(err)
+    })
+
 })
 
 app.get('/v1', (req: Request, res: Response) => {

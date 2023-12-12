@@ -1,13 +1,12 @@
 import express, { Request, Response } from 'express'
 import { IUser, PlanType, User, UserRole } from '../db/models/user'
-import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
+import { generateToken, getPayloadFromToken, getTokenFromRequest } from '../utils/jwtUtils'
 import { validateUser } from '../utils/validators/userValidator'
 import bcrypt from 'bcrypt'
 import multer from 'multer'
 import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
 import { v4 as uuidv4 } from 'uuid'
-import { GoogleAuth } from 'google-auth-library'
 
 const bucketUrl = process.env.GCS_BUCKET_URL ?? ''
 const bucketName = process.env.GCS_BUCKET_NAME ?? ''
@@ -24,10 +23,6 @@ const upload = multer({
     limits: {
         fileSize: 5 * 1024 * 1024, // 5 MB
     },
-})
-
-const authCredentials = new GoogleAuth({
-    keyFilename: '../GoogleCloudKey.json',
 })
 
 interface FormInputs {
@@ -257,7 +252,7 @@ const EMPTY_USER: IUser = {
  *              $ref: '#/components/schemas/Error500'
  */
 router.get('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
     User.findOne({ username: decodedToken.username })
         .select('-password')
@@ -406,9 +401,12 @@ router.post('/new', async (req: Request, res: Response) => {
 
         user.save()
 
-        let token = generateToken(user, res)
+        generateToken(user).then((token) => {
+            return res.status(201).json({ data: token })
+        }).catch((err) => {
+            return res.status(500).send({ error: err })
+        })
 
-        return res.status(201).json({ data: token })
     }
 })
 
@@ -467,35 +465,13 @@ router.post('/login', async (req: Request, res: Response) => {
                 .send({ error: userErrors.invalidUsernameOrPasswordError })
         }
 
-        authCredentials
-            .getIdTokenClient(
-                'https://europe-southwest1-liquid-layout-406710.cloudfunctions.net/'
-            )
-            .then((client) => {
-                fetch(
-                    'https://europe-southwest1-liquid-layout-406710.cloudfunctions.net/fis-g4-jwt-generate',
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + client.credentials.id_token,
-                        },
-                        body: JSON.stringify(user)
-                    }
-                )
-                    .then((token) => {
+        generateToken(user).then((token) => {
+            return res.status(200).json({ data: token })
+        }).catch((err) => {
+            return res.status(500).send({ error: err })
+        });
 
-                        console.log(token)
 
-                        return res.status(200).json({ data: token })
-                    })
-                    .catch((err) => {
-                        return res.status(400).send({
-                            error:
-                                err ?? 'Something went wrong while logging in',
-                        })
-                    })
-            })
     })
 })
 
@@ -554,7 +530,7 @@ router.put(
     '/me',
     upload.single('profilePicture'),
     async (req: Request, res: Response) => {
-        let decodedToken: IUser = getPayloadFromToken(req)
+        let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
         if (req.file) {
             const blob = bucket.file(uuidv4() + '-' + req.file.originalname)
@@ -653,7 +629,7 @@ router.put(
  *              $ref: '#/components/schemas/Error500'
  */
 router.put('/:username', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
     if (decodedToken.role !== UserRole.ADMIN) {
         return res.status(401).send({ error: userErrors.cannotUpdateUserError })
@@ -711,7 +687,7 @@ router.put('/:username', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.delete('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
     User.findOneAndDelete({ username: decodedToken.username })
         .then(() => {
