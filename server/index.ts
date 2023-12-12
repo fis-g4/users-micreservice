@@ -13,13 +13,6 @@ const app: Express = express()
 app.use(express.json())
 app.use(cors())
 
-const URLS_ALLOWED_WITHOUT_TOKEN = [
-    '/v1/users/login',
-    '/v1/users/new',
-    '/v1/docs/*',
-    '/v1',
-]
-
 const swaggerJsDoc = swaggerjsdoc
 const swaggerUI = swaggerui
 
@@ -66,29 +59,17 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions)
 
-function isURLAllowedWithoutToken(url: string): boolean {
-    if (URLS_ALLOWED_WITHOUT_TOKEN.includes(url)) {
-        return true
-    }
-    for (let urlAllowed of URLS_ALLOWED_WITHOUT_TOKEN) {
-        if (
-            urlAllowed.endsWith('/*') &&
-            (url.startsWith(urlAllowed.substring(0, urlAllowed.length - 1)) ||
-                url === urlAllowed.substring(0, urlAllowed.length - 2))
-        ) {
-            return true
-        }
-    }
-    return false
-}
-
 app.use((req, res, next) => {
 
     let bearerHeader = req.headers['authorization'] as string;
-    let bearer: string[] = bearerHeader.split(' ')
-    let bearerToken: string = bearer[1]
+    let bearerToken: string|undefined = undefined;
 
-    verifyToken(req.url, bearerToken).then((payload) => {
+    if (bearerHeader !== undefined) {
+        let bearer: string[] = bearerHeader.split(' ')
+        bearerToken = bearer[1]
+    }
+
+    verifyToken(req.url, bearerToken ?? "").then((payload) => {
         if (payload !== undefined) {
             generateToken(payload).then((token) => {
                 res.setHeader('Authorization', `Bearer ${token}`)
@@ -100,7 +81,7 @@ app.use((req, res, next) => {
             next()
         }
     }).catch((err) => {
-        console.error(err)
+        res.status(500).json({ error: err })
     })
 
 })

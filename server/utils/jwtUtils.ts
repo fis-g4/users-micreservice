@@ -1,18 +1,10 @@
-import { Request, Response } from 'express'
-import * as jwt from 'jsonwebtoken'
+import { Request } from 'express'
 import { IUser } from '../db/models/user'
-import { jwtErrors } from './errorMessages/jwt'
 import { GoogleAuth } from 'google-auth-library'
 
 const authCredentials = new GoogleAuth({
     keyFilename: '../GoogleCloudKey.json',
 })
-
-interface IPayload {
-    payload: IUser
-    iat: number
-    exp: number
-}
 
 function getTokenFromRequest(req: Request): string | undefined {
     let bearerHeader = req.headers['authorization'] as string
