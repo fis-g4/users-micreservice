@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
 import { IUser, User } from '../db/models/user'
 import { IMessage, Message } from '../db/models/message'
-import { getPayloadFromToken } from '../utils/jwtUtils'
+import { getPayloadFromToken, getTokenFromRequest } from '../utils/jwtUtils'
 import { messagesErrors } from '../utils/errorMessages/messages'
 import { SortOrder } from 'mongoose'
 
@@ -262,7 +262,7 @@ const DEFAULT_LIMIT = 25;
  */
 
 router.get('/me/messages', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "");
     const user = await User.findOne({ username: decodedToken.username });
 
     if (!user) {
@@ -356,7 +356,7 @@ router.get('/me/messages', async (req: Request, res: Response) => {
  */
 router.post('/me/messages/new', async (req: Request, res: Response) => {
     const messageData: IMessage = req.body
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "");
     const user = await User.findOne({ username: decodedToken.username });
 
     if (!user) {
@@ -446,7 +446,7 @@ router.post('/me/messages/new', async (req: Request, res: Response) => {
  */
 
 router.patch('/me/messages/:messageId/open', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "");
     const user = await User.findOne({ username: decodedToken.username });
 
     if (!user) {
@@ -530,7 +530,7 @@ router.patch('/me/messages/:messageId/open', async (req: Request, res: Response)
 
 router.patch('/me/messages/:messageId', async (req: Request, res: Response) => {
     const messageData: IMessage = req.body
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "");
     const user = await User.findOne({ username: decodedToken.username });
 
     if (!user) {
@@ -618,7 +618,7 @@ router.patch('/me/messages/:messageId', async (req: Request, res: Response) => {
  */
 
 router.delete('/me/messages/:messageId', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req);
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "");
     const user = await User.findOne({ username: decodedToken.username });
 
     if (!user) {

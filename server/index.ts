@@ -13,13 +13,6 @@ const app: Express = express()
 app.use(express.json())
 app.use(cors())
 
-const URLS_ALLOWED_WITHOUT_TOKEN = [
-    '/v1/users/login',
-    '/v1/users/new',
-    '/v1/docs/*',
-    '/v1',
-]
-
 const swaggerJsDoc = swaggerjsdoc
 const swaggerUI = swaggerui
 
@@ -66,36 +59,31 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions)
 
-function isURLAllowedWithoutToken(url: string): boolean {
-    if (URLS_ALLOWED_WITHOUT_TOKEN.includes(url)) {
-        return true
-    }
-    for (let urlAllowed of URLS_ALLOWED_WITHOUT_TOKEN) {
-        if (
-            urlAllowed.endsWith('/*') &&
-            (url.startsWith(urlAllowed.substring(0, urlAllowed.length - 1)) ||
-                url === urlAllowed.substring(0, urlAllowed.length - 2))
-        ) {
-            return true
-        }
-    }
-    return false
-}
-
 app.use((req, res, next) => {
-    let decodedToken = verifyToken(req, res, isURLAllowedWithoutToken(req.url))
 
-    if (decodedToken !== undefined) {
-        // Agregar el nuevo token al encabezado de la respuesta
-        res.setHeader(
-            'Authorization',
-            `Bearer ${generateToken(decodedToken as object, res)}`
-        )
-    } else if (res.statusCode !== 200) {
-        return res
+    let bearerHeader = req.headers['authorization'] as string;
+    let bearerToken: string|undefined = undefined;
+
+    if (bearerHeader !== undefined) {
+        let bearer: string[] = bearerHeader.split(' ')
+        bearerToken = bearer[1]
     }
 
-    next()
+    verifyToken(req.url, bearerToken ?? "").then((payload) => {
+        if (payload !== undefined) {
+            generateToken(payload).then((token) => {
+                res.setHeader('Authorization', `Bearer ${token}`)
+                next()
+            }).catch((err) => {
+                console.error(err)
+            })
+        }else{
+            next()
+        }
+    }).catch((err) => {
+        res.status(err.statusCode).json({ error: err.message })
+    })
+
 })
 
 app.get('/v1', (req: Request, res: Response) => {

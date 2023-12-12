@@ -16,9 +16,12 @@ jobs:
               with:
                   node-version: '20.x'
 
-            - name: Load GCP Authentication
+            - name: Decrypt Google credentials.json
+              env:
+                GOOGLE_API_PW: ${{ secrets.GCP_CREDENTIALS_PK }}
               run: |
-                  echo ${{ secrets.CD_GCP_CREDENTIALS }} >> ./GoogleCloudKey.json
+                gpg --quiet --batch --yes --decrypt --passphrase="$GOOGLE_API_PW" \
+                --output $GITHUB_WORKSPACE/GoogleCloudKey.json GoogleCloudKey.json.gpg
 
             - name: Make envfile
               uses: SpicyPizza/create-envfile@v2.0
@@ -43,6 +46,9 @@ jobs:
                   envkey_GCS_PROJECT_NAME: ${{ vars.CI_GCS_PROJECT_NAME }}
                   envkey_GCS_BUCKET_NAME: ${{ vars.CI_GCS_BUCKET_NAME }}
                   envkey_GCS_BUCKET_URL: ${{ vars.CI_GCS_BUCKET_URL }}
+                  envkey_GCF_GENERATE_TOKEN_ENDPOINT: ${{ vars.GCF_GENERATE_TOKEN_ENDPOINT }}
+                  envkey_GCF_VERIFY_TOKEN_ENDPOINT: ${{ vars.GCF_VERIFY_TOKEN_ENDPOINT }}
+                  envkey_GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT: ${{ vars.GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT }}
                   directory: ./server
                   file_name: .env
                   fail_on_empty: false

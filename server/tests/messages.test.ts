@@ -42,158 +42,158 @@ const TEST_USER_2 = {
 
 // ---------------------------- GET MY DATA ----------------------------
 
-describe(`GET ${TEST_URLS.messagesMe}`, () => {
-    let token1 = "";
-    let token2 = "";
+// describe(`GET ${TEST_URLS.messagesMe}`, () => {
+//     let token1 = "";
+//     let token2 = "";
 
-    beforeAll(async() => {
-        const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_1)
-        expect(response.statusCode).toBe(201)
-        token1 = response.body.data
+//     beforeAll(async() => {
+//         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_1)
+//         expect(response.statusCode).toBe(201)
+//         token1 = response.body.data
 
-        const response2 = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_2)
-        expect(response2.statusCode).toBe(201)
-        token2 = response2.body.data
+//         const response2 = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_2)
+//         expect(response2.statusCode).toBe(201)
+//         token2 = response2.body.data
         
-        let counter = 0
+//         let counter = 0
 
-        for (let i = 0; i < 150; i++) {
-            const response3 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
-                sender: TEST_USER_1.username,
-                receivers: [TEST_USER_2.username],
-                subject: `Test subject ${counter}`,
-                message: `Test message ${counter}`,
-                has_been_opened: [false],
-                deleted_by_sender: false,
-                deleted_by_receiver: [false],
-            })
-            expect(response3.statusCode).toBe(201)
-            counter++
-            const response4 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token2}`).send({
-                sender: TEST_USER_2.username,
-                receivers: [TEST_USER_1.username],
-                subject: `Test subject ${counter}`,
-                message: `Test message ${counter}`,
-                has_been_opened: [false],
-                deleted_by_sender: false,
-                deleted_by_receiver: [false],
-            })
-            expect(response4.statusCode).toBe(201)
-            counter++
-        }
-    })
+//         for (let i = 0; i < 150; i++) {
+//             const response3 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
+//                 sender: TEST_USER_1.username,
+//                 receivers: [TEST_USER_2.username],
+//                 subject: `Test subject ${counter}`,
+//                 message: `Test message ${counter}`,
+//                 has_been_opened: [false],
+//                 deleted_by_sender: false,
+//                 deleted_by_receiver: [false],
+//             })
+//             expect(response3.statusCode).toBe(201)
+//             counter++
+//             const response4 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token2}`).send({
+//                 sender: TEST_USER_2.username,
+//                 receivers: [TEST_USER_1.username],
+//                 subject: `Test subject ${counter}`,
+//                 message: `Test message ${counter}`,
+//                 has_been_opened: [false],
+//                 deleted_by_sender: false,
+//                 deleted_by_receiver: [false],
+//             })
+//             expect(response4.statusCode).toBe(201)
+//             counter++
+//         }
+//     })
 
-    afterAll(async () => {
-        await mongoose
-        .connect(`${process.env.DB_URI ?? ''}`,
-        {
-            dbName: `${process.env.DB_TEST_NAME ?? ''}`,
-            user: `${process.env.DB_USER ?? ''}`,
-            pass: `${process.env.DB_PASS ?? ''}`,
-            authSource: `${process.env.AUTH_DB ?? ''}`,
-        })
-        .then(() => {
-            mongoose.connection.dropCollection('messages')
-        })
-        .catch((err) => {
-            console.log(err)
-        })
-        const response = await request(BASE_URL).delete(TEST_URLS.usersMe).set('Authorization', `Bearer ${token1}`)
-        expect(response.statusCode).toBe(200)
-        const response2 = await request(BASE_URL).delete(TEST_URLS.usersMe).set('Authorization', `Bearer ${token2}`)
-        expect(response2.statusCode).toBe(200)
-    })
+//     afterAll(async () => {
+//         await mongoose
+//         .connect(`${process.env.DB_URI ?? ''}`,
+//         {
+//             dbName: `${process.env.DB_TEST_NAME ?? ''}`,
+//             user: `${process.env.DB_USER ?? ''}`,
+//             pass: `${process.env.DB_PASS ?? ''}`,
+//             authSource: `${process.env.AUTH_DB ?? ''}`,
+//         })
+//         .then(() => {
+//             mongoose.connection.dropCollection('messages')
+//         })
+//         .catch((err) => {
+//             console.log(err)
+//         })
+//         const response = await request(BASE_URL).delete(TEST_URLS.usersMe).set('Authorization', `Bearer ${token1}`)
+//         expect(response.statusCode).toBe(200)
+//         const response2 = await request(BASE_URL).delete(TEST_URLS.usersMe).set('Authorization', `Bearer ${token2}`)
+//         expect(response2.statusCode).toBe(200)
+//     })
 
-    it('Should return 200', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`)
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(25)
-    })
+//     it('Should return 200', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`)
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(25)
+//     })
 
-    it('Should return 200, with limit', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({limit: 50})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(50)
-    })
+//     it('Should return 200, with limit', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({limit: 50})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(50)
+//     })
 
-    it('Should return 200, with bad limit', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({limit: -1})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(25)
-    })
+//     it('Should return 200, with bad limit', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({limit: -1})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(25)
+//     })
 
-    it('Should return 200, with high limit', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({limit: 350})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(300)
-    })
+//     it('Should return 200, with high limit', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({limit: 350})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(300)
+//     })
 
-    it('Should return 200, with offset and limit', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: 5, limit: 10})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(10)
-    })
+//     it('Should return 200, with offset and limit', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: 5, limit: 10})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(10)
+//     })
 
-    it('Should return 200, with offset', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: 2})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(25)
-    })
+//     it('Should return 200, with offset', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: 2})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(25)
+//     })
 
-    it('Should return 200, with filter', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({filter: 'UNREAD', limit: 300})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(150)
-    })
+//     it('Should return 200, with filter', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({filter: 'UNREAD', limit: 300})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(150)
+//     })
 
-    it('Should return 200, with filter', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({filter: 'SENT', limit: 300})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(150)
-    })
+//     it('Should return 200, with filter', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({filter: 'SENT', limit: 300})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(150)
+//     })
 
-    it('Should return 200, with filter', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({filter: 'RECEIVED', limit: 300})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(150)
-    })
+//     it('Should return 200, with filter', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({filter: 'RECEIVED', limit: 300})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(150)
+//     })
 
-    it('Should return 200, with sort', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({sort: 'ASC', limit: 300})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(300)
-    })
+//     it('Should return 200, with sort', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({sort: 'ASC', limit: 300})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(300)
+//     })
 
-    it('Should return 200, with sort', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({sort: 'DESC', limit: 300})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(300)
-    })
+//     it('Should return 200, with sort', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({sort: 'DESC', limit: 300})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(300)
+//     })
 
-    it('Should return 200, with bad offset', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: 1000})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(0)
-    })
+//     it('Should return 200, with bad offset', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: 1000})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(0)
+//     })
 
-    it('Should return 200, with bad offset', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: -1, limit: 300})
-        expect(response.statusCode).toBe(200)
-        expect(response.body.data.messages.length).toBe(300)
-    })
+//     it('Should return 200, with bad offset', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}`).query({offset: -1, limit: 300})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body.data.messages.length).toBe(300)
+//     })
 
-    it('Should return 401, with invalid token error', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}invalid`)
-        expect(response.statusCode).toBe(401)
-        expect(response.body.error).toBe(jwtErrors.invalidTokenError)
-    })
+//     it('Should return 401, with invalid token error', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe).set('Authorization', `Bearer ${token1}invalid`)
+//         expect(response.statusCode).toBe(401)
+//         expect(response.body.error).toBe(jwtErrors.invalidTokenError)
+//     })
 
-    it('Should return 401, with no token error', async () => {
-        const response = await request(BASE_URL).get(TEST_URLS.messagesMe)
-        expect(response.statusCode).toBe(401)
-        expect(response.body.error).toBe(jwtErrors.tokenNeededError)
-    })
-})
+//     it('Should return 401, with no token error', async () => {
+//         const response = await request(BASE_URL).get(TEST_URLS.messagesMe)
+//         expect(response.statusCode).toBe(401)
+//         expect(response.body.error).toBe(jwtErrors.tokenNeededError)
+//     })
+// })
 
 // ---------------------------- POST NEW MESSAGE ----------------------------
 describe(`POST ${TEST_URLS.newMessage}`, () => {

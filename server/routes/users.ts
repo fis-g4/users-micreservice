@@ -1,18 +1,18 @@
 import express, { Request, Response } from 'express'
 import { IUser, PlanType, User, UserRole } from '../db/models/user'
-import { generateToken, getPayloadFromToken } from '../utils/jwtUtils'
+import { generateToken, getPayloadFromToken, getTokenFromRequest } from '../utils/jwtUtils'
 import { validateUser } from '../utils/validators/userValidator'
 import bcrypt from 'bcrypt'
 import multer from 'multer'
 import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
-import {v4 as uuidv4} from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 const bucketUrl = process.env.GCS_BUCKET_URL ?? ''
 const bucketName = process.env.GCS_BUCKET_NAME ?? ''
 
 const storage = new Storage({
-    projectId: process.env.GCS_PROJECT_NAME ?? "",
+    projectId: process.env.GCS_PROJECT_NAME ?? '',
     keyFilename: '../GoogleCloudKey.json',
 })
 
@@ -41,7 +41,7 @@ const EMPTY_USER: IUser = {
     username: '',
     password: '',
     email: '',
-    profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
+    profilePicture: bucketUrl + '/' + bucketName + '/default-user.jpg',
     coinsAmount: 0,
     plan: PlanType.FREE,
     role: UserRole.USER,
@@ -252,7 +252,7 @@ const EMPTY_USER: IUser = {
  *              $ref: '#/components/schemas/Error500'
  */
 router.get('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
     User.findOne({ username: decodedToken.username })
         .select('-password')
@@ -401,9 +401,12 @@ router.post('/new', async (req: Request, res: Response) => {
 
         user.save()
 
-        let token = generateToken(user, res)
+        generateToken(user).then((token) => {
+            return res.status(201).json({ data: token })
+        }).catch((err) => {
+            return res.status(500).send({ error: err })
+        })
 
-        return res.status(201).json({ data: token })
     }
 })
 
@@ -453,26 +456,23 @@ router.post('/new', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.post('/login', async (req: Request, res: Response) => {
-
     const { username, password }: FormInputs = req.body
 
-    User.findOne({ username: username })
-        .then((user) => {
-            if (!user || !bcrypt.compareSync(password, user.password)) {
-                return res
-                    .status(400)
-                    .send({ error: userErrors.invalidUsernameOrPasswordError })
-            }
-
-            let token = generateToken(user, res)
-
-            return res.status(200).json({ data: token })
-        })
-        .catch((err) => {
+    User.findOne({ username: username }).then((user) => {
+        if (!user || !bcrypt.compareSync(password, user.password)) {
             return res
                 .status(400)
-                .send({ error: err ?? 'Something went wrong while logging in' })
-        })
+                .send({ error: userErrors.invalidUsernameOrPasswordError })
+        }
+
+        generateToken(user).then((token) => {
+            return res.status(200).json({ data: token })
+        }).catch((err) => {
+            return res.status(500).send({ error: err })
+        });
+
+
+    })
 })
 
 // ------------------ PUT ROUTES ------------------
@@ -526,27 +526,39 @@ router.post('/login', async (req: Request, res: Response) => {
  *             schema:
  *              $ref: '#/components/schemas/Error500'
  */
-router.put('/me', upload.single("profilePicture"), async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+router.put(
+    '/me',
+    upload.single('profilePicture'),
+    async (req: Request, res: Response) => {
+        let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
-    if (req.file) {
-        const blob = bucket.file(
-            uuidv4() + "-" + req.file.originalname
-        )
+        if (req.file) {
+            const blob = bucket.file(uuidv4() + '-' + req.file.originalname)
 
-        const blobStream = blob.createWriteStream({
-            resumable: false,
-        })
+            const blobStream = blob.createWriteStream({
+                resumable: false,
+            })
 
-        blobStream.on('error', (err) => {
-            return res.status(500).send({ error: err })
-        })
+            blobStream.on('error', (err) => {
+                return res.status(500).send({ error: err })
+            })
 
-        blobStream.on('finish', async () => {
-            const publicUrl = `${bucketUrl}/${bucket.name}/${blob.name}`
+            blobStream.on('finish', async () => {
+                const publicUrl = `${bucketUrl}/${bucket.name}/${blob.name}`
 
-            req.body.profilePicture = publicUrl
+                req.body.profilePicture = publicUrl
 
+                updateUser(decodedToken.username, req.body, res)
+                    .then(() => {
+                        return res
+                    })
+                    .catch((err) => {
+                        return res.status(400).send({ error: err })
+                    })
+            })
+
+            blobStream.end(req.file.buffer)
+        } else {
             updateUser(decodedToken.username, req.body, res)
                 .then(() => {
                     return res
@@ -554,19 +566,9 @@ router.put('/me', upload.single("profilePicture"), async (req: Request, res: Res
                 .catch((err) => {
                     return res.status(400).send({ error: err })
                 })
-        })
-
-        blobStream.end(req.file.buffer)
-    }else{
-        updateUser(decodedToken.username, req.body, res)
-        .then(() => {
-            return res
-        })
-        .catch((err) => {
-            return res.status(400).send({ error: err })
-        })
+        }
     }
-})
+)
 
 /**
  * @swagger
@@ -627,7 +629,7 @@ router.put('/me', upload.single("profilePicture"), async (req: Request, res: Res
  *              $ref: '#/components/schemas/Error500'
  */
 router.put('/:username', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
     if (decodedToken.role !== UserRole.ADMIN) {
         return res.status(401).send({ error: userErrors.cannotUpdateUserError })
@@ -685,7 +687,7 @@ router.put('/:username', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.delete('/me', async (req: Request, res: Response) => {
-    let decodedToken: IUser = getPayloadFromToken(req)
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
     User.findOneAndDelete({ username: decodedToken.username })
         .then(() => {
@@ -708,7 +710,6 @@ async function updateUser(username: string, userData: any, res: Response) {
 
     User.findOne({ username: username })
         .then(async (user: IUser | null) => {
-            
             if (!user) {
                 return res
                     .status(404)
@@ -719,10 +720,7 @@ async function updateUser(username: string, userData: any, res: Response) {
             let changedEmail = false
 
             for (let key in userData) {
-                if (
-                    key !== 'password' &&
-                    user[key] !== userData[key]
-                ) {
+                if (key !== 'password' && user[key] !== userData[key]) {
                     if (key === 'username') {
                         changedUsername = true
                     } else if (key === 'email') {
