@@ -18,9 +18,9 @@ services:
     image: mongo:6.0
     container_name: mongo-db
     environment:
-        - MONGO_INITDB_ROOT_USERNAME=root
-        - MONGO_INITDB_ROOT_PASSWORD=password
-        - MONGO_INITDB_DATABASE=users-db
+        - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
+        - MONGO_INITDB_ROOT_PASSWORD=${DB_PASS}
+        - MONGO_INITDB_DATABASE=${DB_NAME}
     ports:
       - "27017:27017"
     volumes:

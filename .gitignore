@@ -155,3 +155,7 @@ yarn-error.log*
 
 # Google Cloud Key
 GoogleCloudKey.json
+
+# Prod variables
+terraform/.env.prod
+.ssh/
