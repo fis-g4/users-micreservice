@@ -38,8 +38,34 @@ resource "google_compute_instance" "compute_instance" {
 
   provisioner "file" {
 
+    source = "scripts/startup.sh"
+    destination = "/tmp/startup.sh"
+    connection {
+      host = google_compute_address.static.address
+      type = "ssh"
+      user    = var.user
+      timeout = "500s"
+      private_key = file(var.privatekeypath)
+    }
+  }
+
+  provisioner "file" {
+
     source = ".env.prod"
     destination = "/tmp/.env.prod"
+    connection {
+      host = google_compute_address.static.address
+      type = "ssh"
+      user    = var.user
+      timeout = "500s"
+      private_key = file(var.privatekeypath)
+    }
+  }
+
+  provisioner "file" {
+
+    source = "GoogleCloudKey.json"
+    destination = "/tmp/GoogleCloudKey.json"
     connection {
       host = google_compute_address.static.address
       type = "ssh"
@@ -59,6 +85,9 @@ resource "google_compute_instance" "compute_instance" {
     }
 
     inline = [
+      "chmod a+x /tmp/startup.sh",
+      "sed -i -e 's/\r$//' /tmp/startup.sh",
+      "sudo /tmp/startup.sh",
       "chmod a+x /tmp/run-docker.sh",
       "sed -i -e 's/\r$//' /tmp/run-docker.sh",
       "sudo /tmp/run-docker.sh",
@@ -66,10 +95,11 @@ resource "google_compute_instance" "compute_instance" {
     ]
   }
 
-  depends_on = [google_compute_firewall.flatter_cd_firewall]
+  depends_on = [google_compute_firewall.fis_g4_firewall_cd]
 }
+
 
 resource "google_compute_address" "static" {
   name       = "${var.instance_name}-public-address"
-  depends_on = [google_compute_firewall.flatter_cd_firewall]
+  depends_on = [google_compute_firewall.fis_g4_firewall_cd]
 }

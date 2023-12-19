@@ -1,3 +1,4 @@
-sudo mv /tmp/.env.prod users-mircoservice/server/.env.prod
-cd flatter/docker
-sudo docker-compose up -d
+sudo mv /tmp/.env.prod users-microservice/server/.env.prod
+sudo mv /tmp/GoogleCloudKey.json users-microservice/GoogleCloudKey.json
+cd users-microservice
+sudo docker compose up -d

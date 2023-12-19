@@ -1,12 +1,12 @@
-resource "google_compute_network" "flatter_cd_network" {
+resource "google_compute_network" "fis_g4_network_cd" {
   name                    = "fis-g4-network-cd"
   auto_create_subnetworks = true
   mtu                     = 1460
 }
 
-resource "google_compute_firewall" "flatter_cd_firewall" {
+resource "google_compute_firewall" "fis_g4_firewall_cd" {
   name    = "fis-g4-firewall-cd"
-  network = google_compute_network.flatter_cd_network.name
+  network = google_compute_network.fis_g4_network_cd.name
 
   allow {
     protocol = "icmp"

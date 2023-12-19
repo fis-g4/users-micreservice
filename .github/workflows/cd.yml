@@ -1,9 +1,9 @@
 name: Deploy to GCE
 
 on:
-  pull_request:
+  push:
     branches:
-      - "develop"
+      - "main"
 
 env:
   ENV_CONFIGURATION: ${{ secrets.ENV_CONFIGURATION }}
@@ -28,10 +28,11 @@ jobs:
       - name: Populate terraform variables
         working-directory: ./terraform
         run: |-
-              ssh-keygen -f ~/.ssh/flatter -t rsa -N ""
-              echo "$GCP_CREDENTIALS" | base64 --decode > gcp.json
+              mkdir .ssh
+              ssh-keygen -f .ssh/usersMicroservice -t rsa -N ""
+              echo "$GCP_CREDENTIALS" | base64 --decode > GoogleCloudKey.json
               echo "$TERRAFORM_VARS" | base64 --decode > terraform.tfvars
-              echo "$ENV_CONFIGURATION" | base64 --decode > ./terraform/.env.prod
+              echo "$ENV_CONFIGURATION" | base64 --decode > .env.prod
 
       - name: Terraform Format
         id: fmt

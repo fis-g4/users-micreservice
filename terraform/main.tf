@@ -1,9 +1,9 @@
 terraform {
   cloud {
-    organization = "Sin organización"
+    organization = "FIS-G4"
 
     workspaces {
-      name = "FIS G4"
+      name = "fis-g4"
     }
   }
   required_providers {
