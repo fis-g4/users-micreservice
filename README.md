@@ -1,2 +1,6 @@
-# sample-microservice
-This is a base project to create a microservice using the following set of technologies: MongoDB, ExpressJS, ReactJS and NodeJS
+# FISG G4 Users Microservice
+
+![Deployment](https://github.com/fis-g4/users-microservice/actions/workflows/cd.yml/badge.svg)
+![Tests](https://github.com/fis-g4/users-microservice/actions/workflows/test.yml/badge.svg)
+
+This microservice is in charge of authenticating users and managing their data.
