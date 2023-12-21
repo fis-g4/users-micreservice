@@ -1,0 +1,933 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: Users Microservice API
+  description: API for the users microservice of the FIS-G4 project.
+  contact:
+    name: Francisco Javier Cavero López & Alejandro García Fernández
+    email: ""
+    url: https://github.com/fis-g4/users-microservice
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8000/v1/users
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserLogin:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: The username of the user
+        password:
+          type: string
+          description: The password of the user
+      example:
+        username: johndoe
+        password: johnpassword
+    UserPost:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - username
+        - password
+        - email
+      properties:
+        firstName:
+          type: string
+          description: The first name of the user
+        lastName:
+          type: string
+          description: The last name of the user
+        username:
+          type: string
+          description: The username of the user
+        password:
+          type: string
+          description: The password of the user
+        email:
+          type: string
+          description: The email of the user
+          format: email
+        plan:
+          type: string
+          description: The plan of the user
+          enum:
+            - FREE
+            - PREMIUM
+            - PRO
+        role:
+          type: string
+          description: The role of the user
+          enum:
+            - USER
+            - ADMIN
+      example:
+        firstName: John
+        lastName: Doe
+        username: johndoe
+        password: johnpassword
+        email: johndoe@test.com
+        plan: FREE
+        role: USER
+    UserPut:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: The first name of the user
+        lastName:
+          type: string
+          description: The last name of the user
+        username:
+          type: string
+          description: The username of the user
+        password:
+          type: string
+          description: The password of the user
+        email:
+          type: string
+          description: The email of the user
+          format: email
+        plan:
+          type: string
+          description: The plan of the user
+          enum:
+            - FREE
+            - PREMIUM
+            - PRO
+        role:
+          type: string
+          description: The role of the user
+          enum:
+            - USER
+            - ADMIN
+      example:
+        firstName: John
+        lastName: Doe
+        username: johndoe
+        password: johnpassword
+        email: johndoe@test.com
+        plan: FREE
+        role: USER
+    User:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - username
+        - email
+        - plan
+        - role
+      properties:
+        id:
+          type: string
+          description: The auto-generated id of the user
+        firstName:
+          type: string
+          description: The first name of the user
+        lastName:
+          type: string
+          description: The last name of the user
+        username:
+          type: string
+          description: The username of the user
+        email:
+          type: string
+          description: The email of the user
+          format: email
+        plan:
+          type: string
+          description: The plan of the user
+          enum:
+            - FREE
+            - PREMIUM
+            - PRO
+        role:
+          type: string
+          description: The role of the user
+          enum:
+            - USER
+            - ADMIN
+      example:
+        id: 60b0a1b7c9e8a1b9c8a1b9c8
+        firstName: John
+        lastName: Doe
+        username: johndoe
+        email: johndoe@test.com
+        plan: FREE
+        role: USER
+    UserList:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          description: The user
+          $ref: "#/components/schemas/User"
+    JWTList:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: string
+          description: The JWT token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+    MessagePost:
+      type: object
+      required:
+        - subject
+        - message
+        - sender
+        - receivers
+        - has_been_opened
+        - deleted_by_receiver
+      properties:
+        subject:
+          type: string
+          description: The subject of your message
+        message:
+          type: string
+          description: The text of your message
+        sender:
+          type: string
+          description: The username of the sender
+        receivers:
+          type: array
+          items:
+            type: string
+          description: The usernames of the receivers
+        has_been_opened:
+          type: array
+          items:
+            type: boolean
+          description: Whether the receivers has opened the message
+        deleted_by_sender:
+          type: boolean
+          description: Whether the sender has deleted the message from their inbox
+        deleted_by_receiver:
+          type: array
+          items:
+            type: boolean
+          description: Whether the receivers has deleted the message from their inbox
+      example:
+        subject: Hello!
+        message: How are you?
+        sender: user1
+        receivers:
+          - user2
+          - user3
+        has_been_opened:
+          - false
+          - false
+        deleted_by_sender: false
+        deleted_by_receiver:
+          - false
+          - false
+    MessagePut:
+      type: object
+      properties:
+        subject:
+          type: string
+          description: The subject of your message
+        message:
+          type: string
+          description: The text of your message
+      example:
+        subject: Hello!
+        message: How are you?
+    Message:
+      type: object
+      required:
+        - id
+        - subject
+        - message
+        - sender
+        - receivers
+        - has_been_opened
+        - deleted_by_sender
+        - deleted_by_receiver
+        - date
+      properties:
+        id:
+          type: string
+          description: The auto-generated id of the message
+        subject:
+          type: string
+          description: The subject of your message
+        message:
+          type: string
+          description: The text of your message
+        sender:
+          type: string
+          description: The username of the sender
+        receivers:
+          type: array
+          items:
+            type: string
+          description: The usernames of the receivers
+        has_been_opened:
+          type: array
+          items:
+            type: boolean
+          description: Whether the receivers has opened the message
+        deleted_by_sender:
+          type: boolean
+          description: Whether the sender has deleted the message from their inbox
+        deleted_by_receiver:
+          type: array
+          items:
+            type: boolean
+          description: Whether the receivers has deleted the message from their inbox
+        date:
+          type: string
+          format: date-time
+          description: The date the message was added
+      example:
+        id: 5f748650b547644a7c8a6d0d
+        subject: Hello!
+        message: How are you?
+        sender: user1
+        receivers:
+          - user2
+          - user3
+        has_been_opened:
+          - true
+          - false
+        deleted_by_sender: false
+        deleted_by_receiver:
+          - false
+          - false
+        date: 2023-12-04T00:00:00.000Z
+    MessagesList:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - messages
+            - total
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: "#/components/schemas/Message"
+            total:
+              type: integer
+              example: 10
+    OK2XX:
+      type: object
+      required:
+        - message
+      properties:
+        message: string
+      example:
+        message: The request was successful
+    Error400:
+      type: object
+      required:
+        - error
+      properties:
+        error: string
+      example:
+        error: Bad request
+    Error401:
+      type: object
+      required:
+        - error
+      properties:
+        error: string
+      example:
+        error: Unauthorized
+    Error403:
+      type: object
+      required:
+        - error
+      properties:
+        error: string
+      example:
+        error: Forbidden
+    Error404:
+      type: object
+      required:
+        - error
+      properties:
+        error: string
+      example:
+        error: Not found
+    Error500:
+      type: string
+      example: Internal server error
+security:
+  - bearerAuth: []
+paths:
+  /me:
+    get:
+      summary: Returns the info of the user that is logged in
+      tags:
+        - Users
+      responses:
+        "200":
+          description: The info was successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+    put:
+      summary: Updates the info of the user that is logged in
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPut"
+      responses:
+        "200":
+          description: The info was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "403":
+          description: The user that made the request has not enough privileges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error403"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+    delete:
+      summary: Deletes the user that is logged in
+      tags:
+        - Users
+      responses:
+        "200":
+          description: The user was successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /{username}:
+    get:
+      summary: Returns the info of the user that has the username passed as parameter
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+          description: The username of the user to get
+          example: johndoe
+      responses:
+        "200":
+          description: The info was successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+    put:
+      summary: Updates the info of the user that has the username passed as parameter
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+          description: The username of the user to update
+          example: johndoe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPut"
+      responses:
+        "200":
+          description: The info was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "403":
+          description: The user that made the request has not enough privileges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error403"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /new:
+    post:
+      summary: Creates a new user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPost"
+      security: []
+      responses:
+        "201":
+          description: The user was successfully created (returns the JWT token)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JWTList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /login:
+    post:
+      summary: Logs in the user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      security: []
+      responses:
+        "200":
+          description: The user was successfully logged in (returns the JWT token)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JWTList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /me/messages?filter={filter}&sort={sort}&offset={offset}&limit={limit}:
+    get:
+      summary: Get all the messages of the user
+      tags:
+        - Messages
+      parameters:
+        - in: query
+          name: filter
+          description: Filter the messages
+          schema:
+            type: string
+            enum:
+              - UNREAD
+              - SENT
+              - RECEIVED
+        - in: query
+          name: sort
+          description: Sort the messages
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - in: query
+          name: offset
+          description: The number of messages to skip
+          schema:
+            type: integer
+          example: 0
+        - in: query
+          name: limit
+          description: The number of messages to return. (If not customized, the default
+            value will be 25)
+          schema:
+            type: integer
+          example: 25
+      responses:
+        "200":
+          description: The messages were successfully retrieved. The total number of
+            messages before applying the offset and the limit to the final list
+            is also returned (it can be useful for pagination)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessagesList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /me/messages/new:
+    post:
+      summary: Create a new message
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessagePost"
+      responses:
+        "201":
+          description: The message was successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /me/messages/{messageId}/open:
+    patch:
+      summary: Checks a message as opened
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: string
+          description: The id of the message
+          example: 5f748650b547644a7c8a6d0d
+      responses:
+        "200":
+          description: The message was successfully checked as opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /me/messages/{messageId}:
+    patch:
+      summary: Enables to change the subject or the message of a message already sent
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: string
+          description: The id of the message
+          example: 5f748650b547644a7c8a6d0d
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessagePut"
+      responses:
+        "200":
+          description: The message was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+    delete:
+      summary: Checks a message as deleted
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: string
+          description: The id of the message
+          example: 5f748650b547644a7c8a6d0d
+      responses:
+        "200":
+          description: The message was successfully checked as deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessagesList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+tags:
+  - name: Users
+    description: The users managing API
+  - name: Messages
+    description: The messages managing API
