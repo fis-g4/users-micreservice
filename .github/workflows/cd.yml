@@ -1,6 +1,12 @@
 name: Deploy to GCE
 
 on: [pull_request]
+#   push:
+#     branches:
+#       - "main"
+#   pull_request:
+#     branches:
+#       - "task/029"
 
 env:
   ENV_CONFIGURATION: ${{ secrets.ENV_CONFIGURATION }}

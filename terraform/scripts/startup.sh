@@ -17,3 +17,6 @@ sudo chmod +x ~/.docker/cli-plugins/docker-compose
 # Descarga del repositorio y acceso a él
 
 git clone https://github.com/fis-g4/users-microservice.git
+cd users-microservice
+git checkout task/029
+git pull
