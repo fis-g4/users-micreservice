@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "main"
+  pull_request:
+    branches:
+      - "task/029"
 
 env:
   ENV_CONFIGURATION: ${{ secrets.ENV_CONFIGURATION }}
