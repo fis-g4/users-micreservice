@@ -19,33 +19,31 @@ resource "google_compute_instance" "users_service_instance" {
     ssh-keys = "${var.user}:${file(var.publickeypath)}"
   }
 
-  metadata_startup_script = file("./scripts/startup.sh")
+  metadata_startup_script = <<-EOF
 
-  provisioner "file" {
+  sudo apt -y update
+  sudo apt -y install apt-transport-https ca-certificates curl software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  sudo apt -y update
+  apt-cache policy docker-ce
+  sudo apt -y install docker-ce
 
-    source = ".env.prod"
-    destination = "/tmp/.env.prod"
-    connection {
-      host = self.network_interface[0].network_ip
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-  }
+  mkdir -p ~/.docker/cli-plugins/
+  curl -SL https://github.com/docker/compose/releases/download/v2.3.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+  sudo chmod +x ~/.docker/cli-plugins/docker-compose
 
-  provisioner "file" {
-
-    source = "GoogleCloudKey.json"
-    destination = "/tmp/GoogleCloudKey.json"
-    connection {
-      host = self.network_interface[0].network_ip
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-  }
+  git clone https://github.com/fis-g4/users-microservice.git
+  cd users-microservice
+  git checkout task/029
+  git pull
+  cd terraform
+  export ENV_CONFIGURATION="${file(".env.prod")}"
+  export GOOGLE_APPLICATION_CREDENTIALS="${file("GoogleCloudKey.json")}"
+  chmod a+x scripts/run-docker.sh
+  sed -i -e 's/\r$//' scripts/run-docker.sh
+  sudo scripts/run-docker.sh
+  EOF
 
   depends_on = [google_compute_firewall.fis_g4_firewall_cd, google_compute_firewall.fis_g4_allow_health_check, google_compute_firewall.fis_g4_allow_health_check_https, google_compute_firewall.fis_g4_iap]
 }
