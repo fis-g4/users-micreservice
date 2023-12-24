@@ -37,6 +37,6 @@ resource "google_compute_backend_service" "users_service_backend" {
   }
 
   health_checks = [
-    google_compute_http_health_check.users_sercive_health_check.id,
+    google_compute_http_health_check.users_service_health_check.id,
   ]
 }
