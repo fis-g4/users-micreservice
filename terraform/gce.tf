@@ -38,6 +38,7 @@ resource "google_compute_instance" "users_service_instance" {
   git checkout task/029
   git pull
   cd terraform
+  export PRUEBA="test"
   export ENV_CONFIGURATION="${file(".env.prod")}"
   export GOOGLE_APPLICATION_CREDENTIALS="${file("GoogleCloudKey.json")}"
   chmod a+x scripts/run-docker.sh
