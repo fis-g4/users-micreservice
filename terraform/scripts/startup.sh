@@ -20,3 +20,7 @@ git clone https://github.com/fis-g4/users-microservice.git
 cd users-microservice
 git checkout task/029
 git pull
+cd terraform
+chmod a+x scripts/run-docker.sh
+sed -i -e 's/\r$//' scripts/run-docker.sh
+sudo scripts/run-docker.sh
