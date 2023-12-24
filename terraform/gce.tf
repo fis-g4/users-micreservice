@@ -1,9 +1,9 @@
-resource "google_compute_instance" "compute_instance" {
+resource "google_compute_instance" "users_sercive_instance" {
   name         = var.instance_name
   machine_type = var.instance_machine_type
   zone         = var.zone
 
-  tags = ["fis-g4-instance"]
+  tags = ["fis-g4-instance", "http-server", "https-server", "lb-health-check"]
 
   boot_disk {
     initialize_params {
@@ -13,10 +13,6 @@ resource "google_compute_instance" "compute_instance" {
 
   network_interface {
     network = "fis-g4-network-cd"
-
-    access_config {
-      nat_ip = google_compute_address.static.address
-    }
   }
 
   metadata = {
@@ -28,7 +24,7 @@ resource "google_compute_instance" "compute_instance" {
     source = "scripts/run-docker.sh"
     destination = "/tmp/run-docker.sh"
     connection {
-      host = google_compute_address.static.address
+      host = self.network_interface[0].network_ip
       type = "ssh"
       user    = var.user
       timeout = "500s"
@@ -41,7 +37,7 @@ resource "google_compute_instance" "compute_instance" {
     source = "scripts/startup.sh"
     destination = "/tmp/startup.sh"
     connection {
-      host = google_compute_address.static.address
+      host = self.network_interface[0].network_ip
       type = "ssh"
       user    = var.user
       timeout = "500s"
@@ -54,7 +50,7 @@ resource "google_compute_instance" "compute_instance" {
     source = ".env.prod"
     destination = "/tmp/.env.prod"
     connection {
-      host = google_compute_address.static.address
+      host = self.network_interface[0].network_ip
       type = "ssh"
       user    = var.user
       timeout = "500s"
@@ -67,7 +63,7 @@ resource "google_compute_instance" "compute_instance" {
     source = "GoogleCloudKey.json"
     destination = "/tmp/GoogleCloudKey.json"
     connection {
-      host = google_compute_address.static.address
+      host = self.network_interface[0].network_ip
       type = "ssh"
       user    = var.user
       timeout = "500s"
@@ -77,7 +73,7 @@ resource "google_compute_instance" "compute_instance" {
   
   provisioner "remote-exec" {
     connection {
-      host = google_compute_address.static.address
+      host = self.network_interface[0].network_ip
       type = "ssh"
       user    = var.user
       timeout = "500s"
@@ -95,11 +91,11 @@ resource "google_compute_instance" "compute_instance" {
     ]
   }
 
-  depends_on = [google_compute_firewall.fis_g4_firewall_cd]
+  depends_on = [google_compute_firewall.fis_g4_firewall_cd, google_compute_firewall.fis_g4_allow_health_check, google_compute_firewall.fis_g4_allow_health_check_https, google_compute_firewall.fis_g4_iap]
 }
 
 
-resource "google_compute_address" "static" {
-  name       = "${var.instance_name}-public-address"
-  depends_on = [google_compute_firewall.fis_g4_firewall_cd]
-}
+# resource "google_compute_address" "static" {
+#   name       = "${var.instance_name}-public-address"
+#   depends_on = [google_compute_firewall.fis_g4_firewall_cd]
+# }
