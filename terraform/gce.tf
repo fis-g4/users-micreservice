@@ -41,6 +41,8 @@ resource "google_compute_instance" "users_service_instance" {
   export PRUEBA="test"
   export ENV_CONFIGURATION="${file(".env.prod")}"
   export GOOGLE_APPLICATION_CREDENTIALS="${file("GoogleCloudKey.json")}"
+  echo "test" > test.txt
+  echo "$PRUEBA" > test2.txt
   chmod a+x scripts/run-docker.sh
   sed -i -e 's/\r$//' scripts/run-docker.sh
   sudo scripts/run-docker.sh
