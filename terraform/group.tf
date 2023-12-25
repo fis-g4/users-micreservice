@@ -31,6 +31,7 @@ resource "google_compute_backend_service" "users_service_backend" {
   name      = var.backend_service_name
   port_name = "http"
   protocol  = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
 
   backend {
     group = google_compute_instance_group.users_service_group.id

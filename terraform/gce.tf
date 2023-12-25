@@ -33,6 +33,7 @@ resource "google_compute_instance" "users_service_instance" {
   curl -SL https://github.com/docker/compose/releases/download/v2.3.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
   sudo chmod +x ~/.docker/cli-plugins/docker-compose
 
+  cd /home/${var.user}
   git clone https://github.com/fis-g4/users-microservice.git
   cd users-microservice
   git checkout task/029
@@ -43,6 +44,8 @@ resource "google_compute_instance" "users_service_instance" {
   export GOOGLE_APPLICATION_CREDENTIALS="${file("GoogleCloudKey.json")}"
   echo "test" > test.txt
   echo "$PRUEBA" > test2.txt
+  echo "$ENV_CONFIGURATION" > .env
+  echo "$GOOGLE_APPLICATION_CREDENTIALS" > GoogleCloudKey.json
   chmod a+x scripts/run-docker.sh
   sed -i -e 's/\r$//' scripts/run-docker.sh
   sudo scripts/run-docker.sh
