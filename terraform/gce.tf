@@ -20,7 +20,7 @@ resource "google_compute_instance" "users_service_instance" {
   }
 
   metadata_startup_script = <<-EOF
-
+  #!/bin/bash
   sudo apt -y update
   sudo apt -y install apt-transport-https ca-certificates curl software-properties-common
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
