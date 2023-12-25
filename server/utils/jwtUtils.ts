@@ -75,7 +75,6 @@ function verifyToken(url: string, token: string):  Promise<IUser> {
                     resolve(payload);
                 }).catch((err) => {
 
-                    console.log(err)
                     let statusCode = err.response.status;
                     let message = err.response.data.error
 
