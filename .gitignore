@@ -160,3 +160,4 @@ GoogleCloudKey.json
 terraform/.env.prod
 .ssh/
 *.tfvars
+.terraform/
