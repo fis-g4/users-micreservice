@@ -41,7 +41,7 @@ resource "google_compute_instance" "users_service_instance" {
   cd users-microservice
   git checkout task/029
   git pull
-  export ENV_CONFIGURATION='${file(".env.prod")}'
+  export ENV_CONFIGURATION="${file(".env.prod")}"
   export GOOGLE_APPLICATION_CREDENTIALS='${file("GoogleCloudKey.json")}'
   echo $ENV_CONFIGURATION > .env
   echo $GOOGLE_APPLICATION_CREDENTIALS > GoogleCloudKey.json
