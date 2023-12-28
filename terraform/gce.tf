@@ -43,7 +43,7 @@ resource "google_compute_instance" "users_service_instance" {
   git pull
   export ENV_CONFIGURATION="${file(".env.prod")}"
   export GOOGLE_APPLICATION_CREDENTIALS='${file("GoogleCloudKey.json")}'
-  echo $ENV_CONFIGURATION > .env
+  echo "$ENV_CONFIGURATION" > .env
   echo $GOOGLE_APPLICATION_CREDENTIALS > GoogleCloudKey.json
   sudo docker compose up -d
   EOF
