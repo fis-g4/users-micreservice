@@ -371,6 +371,14 @@ router.post('/me/messages/new', async (req: Request, res: Response) => {
         messageData.date = new Date(Date.now())
     }
 
+    if (messageData?.deleted_by_sender !== false) {
+        messageData.deleted_by_sender = false
+    }
+
+    messageData.deleted_by_receiver = messageData.receivers.map(() => false)
+
+    messageData.has_been_opened = messageData.receivers.map(() => false)
+
     try{
       const message = Message.build(messageData)
       if (message.receivers.length !== message.has_been_opened.length || message.receivers.length !== message.deleted_by_receiver.length) {

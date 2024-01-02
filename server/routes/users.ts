@@ -319,22 +319,42 @@ router.get('/me', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.get('/:username', async (req: Request, res: Response) => {
-    User.findOne({ username: req.params.username })
-        .select('-password')
-        .then((user) => {
-            if (!user) {
-                return res
-                    .status(404)
-                    .send({ error: userErrors.userNotExistError })
-            }
+    if(req.params.username === 'all') {
+        const me = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
+        User.find({})
+            .select('username profilePicture')
+            .then((users) => {
+                if (!users) {
+                    return res
+                        .status(404)
+                        .send({ error: userErrors.userNotExistError })
+                }
 
-            return res.status(200).json({ data: user })
-        })
-        .catch((err) => {
-            return res.status(400).send({
-                error: err ?? 'Something went wrong while getting the user',
+                return res.status(200).json({ data: users.filter((user) => user.username !== me.username) })
             })
-        })
+            .catch((err) => {
+                return res.status(400).send({
+                    error: err ?? 'Something went wrong while getting the user',
+                })
+            })
+    } else{
+        User.findOne({ username: req.params.username })
+            .select('-password')
+            .then((user) => {
+                if (!user) {
+                    return res
+                        .status(404)
+                        .send({ error: userErrors.userNotExistError })
+                }
+
+                return res.status(200).json({ data: user })
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    error: err ?? 'Something went wrong while getting the user',
+                })
+            })
+    }
 })
 
 // ------------------ POST ROUTES ------------------
@@ -401,8 +421,20 @@ router.post('/new', async (req: Request, res: Response) => {
 
         user.save()
 
+        let userCreated = {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+            profilePicture: user.profilePicture,
+            coinsAmount: user.coinsAmount,
+            plan: user.plan
+        }
+
+
         generateToken(user).then((token) => {
-            return res.status(201).json({ data: token })
+            return res.status(201).json({ data: {token: token, user: userCreated } })
         }).catch((err) => {
             return res.status(500).send({ error: err })
         })
@@ -465,8 +497,19 @@ router.post('/login', async (req: Request, res: Response) => {
                 .send({ error: userErrors.invalidUsernameOrPasswordError })
         }
 
+        let userData = {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+            profilePicture: user.profilePicture,
+            coinsAmount: user.coinsAmount,
+            plan: user.plan
+        }
+
         generateToken(user).then((token) => {
-            return res.status(200).json({ data: token })
+            return res.status(200).json({ data: {token: token, user: userData }})
         }).catch((err) => {
             return res.status(500).send({ error: err })
         });
@@ -761,6 +804,11 @@ async function updateUser(username: string, userData: any, res: Response) {
 
                 User.updateOne({ username: username }, user)
                     .then(() => {
+                        generateToken(user).then((token) => {
+                            res.setHeader('Authorization', `Bearer ${token}`)
+                        }).catch((err) => {
+                            console.error(err)
+                        })
                         return res
                             .status(200)
                             .json({ message: 'User updated!' })
