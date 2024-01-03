@@ -38,7 +38,7 @@ function populateUsers() {
         lastName: 'User',
         username: process.env.ADMIN_USERNAME ?? 'admin',
         password: bcrypt.hashSync(process.env.ADMIN_PASSWORD ?? 'password', salt),
-        email: 'coursesadmin@example.com',
+        email: process.env.ADMIN_EMAIL ?? 'admin@example.com',
         profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
         coinsAmount: 99999,
         plan: PlanType.PRO,
@@ -50,7 +50,7 @@ function populateUsers() {
         lastName: 'Admin User',
         username: process.env.COURSES_SERVICE_USERNAME ?? '',
         password: bcrypt.hashSync(process.env.COURSES_SERVICE_PASSWORD ?? '', salt),
-        email: process.env.ADMIN_EMAIL ?? 'admin@example.com',
+        email: 'coursesadmin@example.com',
         profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
         coinsAmount: 99999,
         plan: PlanType.PRO,
@@ -59,10 +59,10 @@ function populateUsers() {
 }
 
 async function populateDB() {
-
-    console.log('Populating DB...');
     
     if (process.env.NODE_ENV !== 'production') {
+
+        console.log('Populating DB...');
 
         User.collection.countDocuments().then((count) => {
             if (count === 0 || POPULATE_DB_ON_EACH_RELOAD) {
@@ -71,9 +71,10 @@ async function populateDB() {
                 });
             }
         })
+        
+        console.log('Populated!');
     }
 
-    console.log('Populated!');
 }
 
 export default populateDB;

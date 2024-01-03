@@ -50,7 +50,7 @@ describe(`GET ${TEST_URLS.usersMe}`, () => {
     beforeAll(async () => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.data
+        token = response.body.data.token
     })
 
     afterAll(async () => {
@@ -86,7 +86,7 @@ describe(`GET ${TEST_URLS.users}`, () => {
     beforeAll(async () => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.data
+        token = response.body.data.token
     })
 
     afterAll(async () => {
@@ -139,7 +139,7 @@ describe(`POST ${TEST_URLS.newUser}`, () => {
     it('Should return 201', async () => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.data
+        token = response.body.data.token
     })
 
     it('Should return 201 | User with role USER althought ADMIN role is passed', async () => {
@@ -147,7 +147,7 @@ describe(`POST ${TEST_URLS.newUser}`, () => {
         let testToken = ""
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(testUserWithAdminRole)
         expect(response.statusCode).toBe(201)
-        testToken = response.body.data
+        testToken = response.body.data.token
         const responseCreatedUser = await request(BASE_URL).get(TEST_URLS.usersMe).send(testUserWithAdminRole).set('Authorization', `Bearer ${testToken}`)
         expect(responseCreatedUser.statusCode).toBe(200)
         expect(responseCreatedUser.body.data.role).toBe(UserRole.USER)
@@ -241,7 +241,7 @@ describe(`POST ${TEST_URLS.login}`, () => {
     beforeAll(async () => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.data
+        token = response.body.data.token
     })
 
     afterAll(async () => {
@@ -293,10 +293,10 @@ describe(`PUT ${TEST_URLS.usersUpdate}`, () => {
     beforeAll(async () => {
         const createTestUserResponse = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
         expect(createTestUserResponse.statusCode).toBe(201)
-        testUserToken = createTestUserResponse.body.data
+        testUserToken = createTestUserResponse.body.data.token
         const adminLoginResponse = await request(BASE_URL).post(TEST_URLS.login).send(ADMIN_USER_CREDENTIALS)
         expect(adminLoginResponse.statusCode).toBe(200)
-        adminToken = adminLoginResponse.body.data
+        adminToken = adminLoginResponse.body.data.token
     })
 
     afterAll(async () => {
@@ -405,7 +405,7 @@ describe(`PUT ${TEST_URLS.usersMe}`, () => {
     beforeAll(async () => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
         expect(response.statusCode).toBe(201)
-        token = response.body.data
+        token = response.body.data.token
     })
 
     afterAll(async () => {
@@ -423,7 +423,7 @@ describe(`PUT ${TEST_URLS.usersMe}`, () => {
 
         const responseLogin = await request(BASE_URL).post(TEST_URLS.login).send({username: TEST_USER.username, password: TEST_USER.password})
         expect(responseLogin.statusCode).toBe(200)
-        token = responseLogin.body.data
+        token = responseLogin.body.data.token
 
         const responseUserData = await request(BASE_URL).get(TEST_URLS.usersMe).set('Authorization', `Bearer ${token}`)
         expect(responseUserData.statusCode).toBe(200)
@@ -433,11 +433,10 @@ describe(`PUT ${TEST_URLS.usersMe}`, () => {
         const responseUpdateReturn = await request(BASE_URL).put(TEST_URLS.usersMe).send({firstName: TEST_USER.firstName}).set('Authorization', `Bearer ${token}`)
         expect(responseUpdateReturn.statusCode).toBe(200)
         expect(responseUpdateReturn.body.message).toBe("User updated!")
-        token = responseUpdateReturn.body.data
 
         const responseLoginReturn = await request(BASE_URL).post(TEST_URLS.login).send({username: TEST_USER.username, password: TEST_USER.password})
         expect(responseLoginReturn.statusCode).toBe(200)
-        token = responseLoginReturn.body.data
+        token = responseLoginReturn.body.data.token
 
         const responseUserDataReturn = await request(BASE_URL).get(TEST_URLS.usersMe).set('Authorization', `Bearer ${token}`)
         expect(responseUserDataReturn.statusCode).toBe(200)
@@ -515,10 +514,10 @@ describe(`DELETE ${TEST_URLS.usersMe}`, () => {
         beforeAll(async () => {
             const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER)
             expect(response.statusCode).toBe(201)
-            token = response.body.data
+            token = response.body.data.token
         })
     
-        it('Should return 200', async () => {
+        it('Should return 201', async () => {
             const response = await request(BASE_URL).delete(TEST_URLS.usersMe).set('Authorization', `Bearer ${token}`)
             expect(response.statusCode).toBe(200)
         })
