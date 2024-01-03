@@ -26,7 +26,7 @@ function populateUsers() {
         lastName: 'Doe',
         username: 'johnDoe',
         password: bcrypt.hashSync('john1234', salt),
-        email: 'javiercavlop@gmail.com',
+        email: 'john@example.com',
         profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
         coinsAmount: 100,
         plan: PlanType.PREMIUM,
