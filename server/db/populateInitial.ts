@@ -44,13 +44,25 @@ function populateUsers() {
         plan: PlanType.PRO,
         role: UserRole.ADMIN,
     }).save();
+
+    User.build({
+        firstName: 'Courses',
+        lastName: 'Admin User',
+        username: process.env.COURSES_SERVICE_USERNAME ?? '',
+        password: bcrypt.hashSync(process.env.COURSES_SERVICE_PASSWORD ?? '', salt),
+        email: 'coursesadmin@example.com',
+        profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
+        coinsAmount: 99999,
+        plan: PlanType.PRO,
+        role: UserRole.ADMIN,
+    }).save();
 }
 
 async function populateDB() {
-
-    console.log('Populating DB...');
     
     if (process.env.NODE_ENV !== 'production') {
+
+        console.log('Populating DB...');
 
         User.collection.countDocuments().then((count) => {
             if (count === 0 || POPULATE_DB_ON_EACH_RELOAD) {
@@ -59,9 +71,10 @@ async function populateDB() {
                 });
             }
         })
+        
+        console.log('Populated!');
     }
 
-    console.log('Populated!');
 }
 
 export default populateDB;

@@ -576,6 +576,7 @@ router.put(
         let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
         if (req.file) {
+            
             const blob = bucket.file(uuidv4() + '-' + req.file.originalname)
 
             const blobStream = blob.createWriteStream({
@@ -742,6 +743,7 @@ router.delete('/me', async (req: Request, res: Response) => {
 })
 
 async function updateUser(username: string, userData: any, res: Response) {
+    
     if (!userData) {
         return res.status(400).send({ error: userErrors.noUserDataError })
     }
@@ -753,6 +755,7 @@ async function updateUser(username: string, userData: any, res: Response) {
 
     User.findOne({ username: username })
         .then(async (user: IUser | null) => {
+
             if (!user) {
                 return res
                     .status(404)
@@ -770,6 +773,21 @@ async function updateUser(username: string, userData: any, res: Response) {
                         changedEmail = true
                     }
                     user[key] = userData[key]
+                }
+            }
+
+            if (userData.newPassword) {
+                if(!userData.currentPassword){
+                    return res
+                        .status(400)
+                        .send({ error: userErrors.invalidCurrentPasswordError })
+                }
+                if (!bcrypt.compareSync(userData.currentPassword, user.password)) {
+                    return res
+                        .status(400)
+                        .send({ error: userErrors.invalidCurrentPasswordError })
+                }else{
+                    user.password = bcrypt.hashSync(userData.newPassword, salt)
                 }
             }
 
@@ -806,12 +824,12 @@ async function updateUser(username: string, userData: any, res: Response) {
                     .then(() => {
                         generateToken(user).then((token) => {
                             res.setHeader('Authorization', `Bearer ${token}`)
+                            return res
+                                .status(200)
+                                .json({ message: 'User updated!' })
                         }).catch((err) => {
                             console.error(err)
                         })
-                        return res
-                            .status(200)
-                            .json({ message: 'User updated!' })
                     })
                     .catch((err) => {
                         return res.status(400).send({

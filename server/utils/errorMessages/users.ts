@@ -11,7 +11,8 @@ const userErrors = {
     userNotExistError: 'User does not exist!',
     noUserDataError: 'No user data sent!',
     cannotUpdateUserError: 'You are not authorized to update this user',
-    invalidCoinsAmountError: 'The coinsAmount must be a positive number'
+    invalidCoinsAmountError: 'The coinsAmount must be a positive number',
+    invalidCurrentPasswordError: 'The current password of the user is incorrect, you cannot modify the password',
 }
 
 export { userErrors }
