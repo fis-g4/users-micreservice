@@ -158,5 +158,7 @@ GoogleCloudKey.json
 
 # Prod variables
 terraform/.env.prod
+.terraform/
+.terraform*
 .ssh/
 *.tfvars
