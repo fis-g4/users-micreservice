@@ -7,6 +7,8 @@ import './db/conn'
 import { generateToken, verifyToken } from './utils/jwtUtils'
 import swaggerjsdoc from 'swagger-jsdoc'
 import swaggerui from 'swagger-ui-express'
+import yaml from 'yaml'
+import fs from 'fs';
 
 const app: Express = express()
 
@@ -59,6 +61,9 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions)
 
+const yamlString: string = yaml.stringify(swaggerDocs, {});
+fs.writeFileSync("./docs/swagger.yaml", yamlString);
+
 app.use((req, res, next) => {
 
     let bearerHeader = req.headers['authorization'] as string;
@@ -86,20 +91,16 @@ app.use((req, res, next) => {
 
 })
 
-app.get('/v1', (req: Request, res: Response) => {
-    res.send('Hello World From the Typescript Server!')
-})
-
 const port = process.env.PORT ?? 8000
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
 
-app.use('/v1/users', users)
-app.use('/v1/users', messages)
 app.use(
-    '/v1/docs/',
+    '/v1/users/docs/',
     swaggerUI.serve,
     swaggerUI.setup(swaggerDocs, { explorer: true })
 )
+app.use('/v1/users', users)
+app.use('/v1/users', messages)

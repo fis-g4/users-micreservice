@@ -1,9 +1,9 @@
-resource "google_compute_instance" "compute_instance" {
+resource "google_compute_instance" "users_service_instance" {
   name         = var.instance_name
   machine_type = var.instance_machine_type
   zone         = var.zone
 
-  tags = ["fis-g4-instance"]
+  tags = ["fis-g4-instance", "http-server", "https-server", "lb-health-check"]
 
   boot_disk {
     initialize_params {
@@ -15,7 +15,6 @@ resource "google_compute_instance" "compute_instance" {
     network = "fis-g4-network-cd"
 
     access_config {
-      nat_ip = google_compute_address.static.address
     }
   }
 
@@ -23,83 +22,29 @@ resource "google_compute_instance" "compute_instance" {
     ssh-keys = "${var.user}:${file(var.publickeypath)}"
   }
 
-  provisioner "file" {
+  metadata_startup_script = <<-EOF
+  #!/bin/bash
+  sudo apt -y update
+  sudo apt -y install apt-transport-https ca-certificates curl software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  sudo apt -y update
+  apt-cache policy docker-ce
+  sudo apt -y install docker-ce
 
-    source = "scripts/run-docker.sh"
-    destination = "/tmp/run-docker.sh"
-    connection {
-      host = google_compute_address.static.address
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-  }
+  mkdir -p ~/.docker/cli-plugins/
+  curl -SL https://github.com/docker/compose/releases/download/v2.3.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+  sudo chmod +x ~/.docker/cli-plugins/docker-compose
 
-  provisioner "file" {
+  cd /home/${var.user}
+  git clone https://github.com/fis-g4/users-microservice.git
+  cd users-microservice
+  export ENV_CONFIGURATION="${file(".env.prod")}"
+  export GOOGLE_APPLICATION_CREDENTIALS='${file("GoogleCloudKey.json")}'
+  echo "$ENV_CONFIGURATION" > .env
+  echo $GOOGLE_APPLICATION_CREDENTIALS > GoogleCloudKey.json
+  sudo docker compose up -d
+  EOF
 
-    source = "scripts/startup.sh"
-    destination = "/tmp/startup.sh"
-    connection {
-      host = google_compute_address.static.address
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-  }
-
-  provisioner "file" {
-
-    source = ".env.prod"
-    destination = "/tmp/.env.prod"
-    connection {
-      host = google_compute_address.static.address
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-  }
-
-  provisioner "file" {
-
-    source = "GoogleCloudKey.json"
-    destination = "/tmp/GoogleCloudKey.json"
-    connection {
-      host = google_compute_address.static.address
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-  }
-  
-  provisioner "remote-exec" {
-    connection {
-      host = google_compute_address.static.address
-      type = "ssh"
-      user    = var.user
-      timeout = "500s"
-      private_key = file(var.privatekeypath)
-    }
-
-    inline = [
-      "chmod a+x /tmp/startup.sh",
-      "sed -i -e 's/\r$//' /tmp/startup.sh",
-      "sudo /tmp/startup.sh",
-      "chmod a+x /tmp/run-docker.sh",
-      "sed -i -e 's/\r$//' /tmp/run-docker.sh",
-      "sudo /tmp/run-docker.sh",
-
-    ]
-  }
-
-  depends_on = [google_compute_firewall.fis_g4_firewall_cd]
-}
-
-
-resource "google_compute_address" "static" {
-  name       = "${var.instance_name}-public-address"
-  depends_on = [google_compute_firewall.fis_g4_firewall_cd]
+  depends_on = [google_compute_firewall.fis_g4_firewall_cd, google_compute_firewall.fis_g4_allow_health_check, google_compute_firewall.fis_g4_allow_health_check_https, google_compute_firewall.fis_g4_iap]
 }

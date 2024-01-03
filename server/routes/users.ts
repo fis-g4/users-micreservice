@@ -251,6 +251,10 @@ const EMPTY_USER: IUser = {
  *             schema:
  *              $ref: '#/components/schemas/Error500'
  */
+router.get('/check', async (req: Request, res: Response) => {
+    return res.status(200).json({ message: "The users service is working properly!!" })
+})
+
 router.get('/me', async (req: Request, res: Response) => {
     let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
