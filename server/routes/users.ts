@@ -8,6 +8,16 @@ import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
 import { v4 as uuidv4 } from 'uuid'
 
+const brevo = require('sib-api-v3-sdk');
+let defaultClient = brevo.ApiClient.instance;
+
+let apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY ?? '';
+
+function getHTML(){
+    return '<html><body><p>Hi {{ params.firstName | default : "NAME" }} {{ params.lastName | default : "SURNAME" }},</p><p>We have recovered your password. Please use the following credentials to authenticate in <a href="https://fisg4.javiercavlop.com">https://fisg4.javiercavlop.com</a>:</p><p> username: {{ params.username | default : "USERNAME" }}</p><p> password: {{ params.password | default : "PASSWORD" }}</p></br><p>Please do not respond to this email,</p><p><strong>FIS G4 - TEAM</strong></p></body></html>    '
+}
+
 const bucketUrl = process.env.GCS_BUCKET_URL ?? ''
 const bucketName = process.env.GCS_BUCKET_NAME ?? ''
 
@@ -271,6 +281,48 @@ router.get('/me', async (req: Request, res: Response) => {
             })
         })
 })
+
+router.get('/reset', async (req: Request, res: Response) => {
+    let username = req.query.username as string
+    let user = await User.findOne({ username: username });
+
+    if(!user){
+        return res.status(400).send({ error: userErrors.userNotExistError })
+    }
+
+    let randomPassword = Math.random().toString(36).slice(-8);  
+
+    user.password = bcrypt.hashSync(randomPassword, salt)
+
+    try{
+        await user.save()
+    }catch(err){
+        return res.status(400).send({ error: err })
+    }
+
+    let apiInstance = new brevo.TransactionalEmailsApi();
+    let sendSmtpEmail = new brevo.SendSmtpEmail();
+    
+    sendSmtpEmail.subject = "Reset your password - FIS G4";
+    sendSmtpEmail.htmlContent = getHTML();
+    sendSmtpEmail.sender = { "name": "FIS G4 - TEAM", "email": "fisg4microservices@gmail.com" };
+    sendSmtpEmail.to = [
+      { "email": user.email, "name": user.__v.fullName }
+    ];
+    sendSmtpEmail.params = { 
+        "username": user.username,
+        "password": randomPassword,
+        "firstName": user.firstName,
+        "lastName": user.lastName
+     };
+    
+
+    apiInstance.sendTransacEmail(sendSmtpEmail).then((data: any) => {
+        return res.status(200).json({ message: 'Password reset!' })
+    }).catch((error: any) => {
+        return res.status(400).send({ error: error })
+    });
+});
 
 /**
  * @swagger
