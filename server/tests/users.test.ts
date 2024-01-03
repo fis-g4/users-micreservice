@@ -517,7 +517,7 @@ describe(`DELETE ${TEST_URLS.usersMe}`, () => {
             token = response.body.data.token
         })
     
-        it('Should return 201', async () => {
+        it('Should return 200', async () => {
             const response = await request(BASE_URL).delete(TEST_URLS.usersMe).set('Authorization', `Bearer ${token}`)
             expect(response.statusCode).toBe(200)
         })
