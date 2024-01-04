@@ -1,0 +1,900 @@
+swagger: '2.0'
+info:
+  contact:
+    email: fisg4microservices@gmail.com
+    name: Francisco Javier Cavero López & Alejandro García Fernández
+    url: 'https://github.com/fis-g4/users-microservice'
+  description: API for the users microservice of the FIS-G4 project.
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+  title: Users Microservice API
+  version: 1.0.0
+host: fisg4.javiercavlop.com
+basePath: /v1/users
+schemes:
+  - https
+paths:
+  /login:
+    post:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserLogin'
+      responses:
+        '200':
+          description: The user was successfully logged in (returns the JWT token)
+          schema:
+            $ref: '#/definitions/JWTList'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      tags:
+        - Users
+      operationId: loginUser
+      summary: Logs in the user
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  /me:
+    delete:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: The user was successfully deleted
+          schema:
+            $ref: '#/definitions/OK2XX'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Users
+      operationId: deleteMyUser
+      summary: Deletes the user that is logged in
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: The info was successfully retrieved
+          schema:
+            $ref: '#/definitions/UserList'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Users
+      operationId: getMyUserData
+      summary: Returns the info of the user that is logged in
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+    put:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserPut'
+      responses:
+        '200':
+          description: The info was successfully updated
+          schema:
+            $ref: '#/definitions/OK2XX'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '403':
+          description: The user that made the request has not enough privileges
+          schema:
+            $ref: '#/definitions/Error403'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Users
+      operationId: updateMyUserData
+      summary: Updates the info of the user that is logged in
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  /me/messages:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: Filter the messages
+          enum:
+            - UNREAD
+            - SENT
+            - RECEIVED
+          in: query
+          name: filter
+          type: string
+        - description: Sort the messages
+          enum:
+            - ASC
+            - DESC
+          in: query
+          name: sort
+          type: string
+        - description: The number of messages to skip
+          in: query
+          name: offset
+          type: integer
+          x-example: 0
+        - description: >-
+            The number of messages to return. (If not customized, the default
+            value will be 25)
+          in: query
+          name: limit
+          type: integer
+          x-example: 25
+      responses:
+        '200':
+          description: >-
+            The messages were successfully retrieved. The total number of
+            messages before applying the offset and the limit to the final list
+            is also returned (it can be useful for pagination)
+          schema:
+            $ref: '#/definitions/MessagesList'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Messages
+      operationId: getMyMessages
+      summary: Get all the messages of the user
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  /me/messages/new:
+    post:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/MessagePost'
+      responses:
+        '201':
+          description: The message was successfully created
+          schema:
+            $ref: '#/definitions/OK2XX'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Messages
+      operationId: createMessage
+      summary: Create a new message
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  '/me/messages/{messageId}':
+    delete:
+      produces:
+        - application/json
+      parameters:
+        - description: The id of the message
+          in: path
+          name: messageId
+          required: true
+          type: string
+          x-example: 5f748650b547644a7c8a6d0d
+      responses:
+        '200':
+          description: The message was successfully checked as deleted
+          schema:
+            $ref: '#/definitions/MessagesList'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Messages
+      operationId: deleteMessage
+      summary: Checks a message as deleted
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+    patch:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - description: The id of the message
+          in: path
+          name: messageId
+          required: true
+          type: string
+          x-example: 5f748650b547644a7c8a6d0d
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/MessagePut'
+      responses:
+        '200':
+          description: The message was successfully updated
+          schema:
+            $ref: '#/definitions/OK2XX'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Messages
+      operationId: enableToUpdateMessage
+      summary: Enables to change the subject or the message of a message already sent
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  '/me/messages/{messageId}/open':
+    patch:
+      produces:
+        - application/json
+      parameters:
+        - description: The id of the message
+          in: path
+          name: messageId
+          required: true
+          type: string
+          x-example: 5f748650b547644a7c8a6d0d
+      responses:
+        '200':
+          description: The message was successfully checked as opened
+          schema:
+            $ref: '#/definitions/OK2XX'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Messages
+      operationId: checkMessageAsOpened
+      summary: Checks a message as opened
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  /new:
+    post:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserPost'
+      responses:
+        '201':
+          description: The user was successfully created (returns the JWT token)
+          schema:
+            $ref: '#/definitions/JWTList'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      tags:
+        - Users
+      operationId: createUser
+      summary: Creates a new user
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+  '/{username}':
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: The username of the user to get
+          in: path
+          name: username
+          required: true
+          type: string
+          x-example: johndoe
+      responses:
+        '200':
+          description: The info was successfully retrieved
+          schema:
+            $ref: '#/definitions/UserList'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Users
+      operationId: getUserData
+      summary: Returns the info of the user that has the username passed as parameter
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+    put:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - description: The username of the user to update
+          in: path
+          name: username
+          required: true
+          type: string
+          x-example: johndoe
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserPut'
+      responses:
+        '200':
+          description: The info was successfully updated
+          schema:
+            $ref: '#/definitions/OK2XX'
+        '400':
+          description: There was an error with the request
+          schema:
+            $ref: '#/definitions/Error400'
+        '401':
+          description: The request was not authorized
+          schema:
+            $ref: '#/definitions/Error401'
+        '403':
+          description: The user that made the request has not enough privileges
+          schema:
+            $ref: '#/definitions/Error403'
+        '404':
+          description: The item was not found
+          schema:
+            $ref: '#/definitions/Error404'
+        '500':
+          description: Some server error
+          schema:
+            $ref: '#/definitions/Error500'
+      security:
+        - bearerAuth: []
+      tags:
+        - Users
+      operationId: updateUserData
+      summary: Updates the info of the user that has the username passed as parameter
+      x-google-backend:
+        address: 'http://users-microservice.fisg4.javiercavlop.com'
+definitions:
+  Error400:
+    example:
+      error: Bad request
+    properties:
+      error:
+        type: string
+    required:
+      - error
+    type: object
+  Error401:
+    example:
+      error: Unauthorized
+    properties:
+      error:
+        type: string
+    required:
+      - error
+    type: object
+  Error403:
+    example:
+      error: Forbidden
+    properties:
+      error:
+        type: string
+    required:
+      - error
+    type: object
+  Error404:
+    example:
+      error: Not found
+    properties:
+      error:
+        type: string
+    required:
+      - error
+    type: object
+  Error500:
+    example: Internal server error
+    type: string
+  JWTList:
+    properties:
+      data:
+        description: The JWT token
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+        type: string
+    required:
+      - data
+    type: object
+  Message:
+    example:
+      date: '2023-12-04T00:00:00.000Z'
+      deleted_by_receiver:
+        - false
+        - false
+      deleted_by_sender: false
+      has_been_opened:
+        - true
+        - false
+      id: 5f748650b547644a7c8a6d0d
+      message: How are you?
+      receivers:
+        - user2
+        - user3
+      sender: user1
+      subject: Hello!
+    properties:
+      date:
+        description: The date the message was added
+        format: date-time
+        type: string
+      deleted_by_receiver:
+        description: Whether the receivers has deleted the message from their inbox
+        items:
+          type: boolean
+        type: array
+      deleted_by_sender:
+        description: Whether the sender has deleted the message from their inbox
+        type: boolean
+      has_been_opened:
+        description: Whether the receivers has opened the message
+        items:
+          type: boolean
+        type: array
+      id:
+        description: The auto-generated id of the message
+        type: string
+      message:
+        description: The text of your message
+        type: string
+      receivers:
+        description: The usernames of the receivers
+        items:
+          type: string
+        type: array
+      sender:
+        description: The username of the sender
+        type: string
+      subject:
+        description: The subject of your message
+        type: string
+    required:
+      - id
+      - subject
+      - message
+      - sender
+      - receivers
+      - has_been_opened
+      - deleted_by_sender
+      - deleted_by_receiver
+      - date
+    type: object
+  MessagePost:
+    example:
+      deleted_by_receiver:
+        - false
+        - false
+      deleted_by_sender: false
+      has_been_opened:
+        - false
+        - false
+      message: How are you?
+      receivers:
+        - user2
+        - user3
+      sender: user1
+      subject: Hello!
+    properties:
+      deleted_by_receiver:
+        description: Whether the receivers has deleted the message from their inbox
+        items:
+          type: boolean
+        type: array
+      deleted_by_sender:
+        description: Whether the sender has deleted the message from their inbox
+        type: boolean
+      has_been_opened:
+        description: Whether the receivers has opened the message
+        items:
+          type: boolean
+        type: array
+      message:
+        description: The text of your message
+        type: string
+      receivers:
+        description: The usernames of the receivers
+        items:
+          type: string
+        type: array
+      sender:
+        description: The username of the sender
+        type: string
+      subject:
+        description: The subject of your message
+        type: string
+    required:
+      - subject
+      - message
+      - sender
+      - receivers
+      - has_been_opened
+      - deleted_by_receiver
+    type: object
+  MessagePut:
+    example:
+      message: How are you?
+      subject: Hello!
+    properties:
+      message:
+        description: The text of your message
+        type: string
+      subject:
+        description: The subject of your message
+        type: string
+    type: object
+  MessagesList:
+    properties:
+      data:
+        properties:
+          messages:
+            items:
+              $ref: '#/definitions/Message'
+            type: array
+          total:
+            example: 10
+            type: integer
+        required:
+          - messages
+          - total
+        type: object
+    required:
+      - data
+    type: object
+  OK2XX:
+    example:
+      message: The request was successful
+    properties:
+      message:
+        type: string
+    required:
+      - message
+    type: object
+  User:
+    example:
+      email: johndoe@test.com
+      firstName: John
+      id: 60b0a1b7c9e8a1b9c8a1b9c8
+      lastName: Doe
+      plan: FREE
+      role: USER
+      username: johndoe
+    properties:
+      email:
+        description: The email of the user
+        format: email
+        type: string
+      firstName:
+        description: The first name of the user
+        type: string
+      id:
+        description: The auto-generated id of the user
+        type: string
+      lastName:
+        description: The last name of the user
+        type: string
+      plan:
+        description: The plan of the user
+        enum:
+          - FREE
+          - PREMIUM
+          - PRO
+        type: string
+      role:
+        description: The role of the user
+        enum:
+          - USER
+          - ADMIN
+        type: string
+      username:
+        description: The username of the user
+        type: string
+    required:
+      - firstName
+      - lastName
+      - username
+      - email
+      - plan
+      - role
+    type: object
+  UserList:
+    properties:
+      data:
+        $ref: '#/definitions/User'
+        description: The user
+        type: object
+    required:
+      - data
+    type: object
+  UserLogin:
+    example:
+      password: johnpassword
+      username: johndoe
+    properties:
+      password:
+        description: The password of the user
+        type: string
+      username:
+        description: The username of the user
+        type: string
+    required:
+      - username
+      - password
+    type: object
+  UserPost:
+    example:
+      email: johndoe@test.com
+      firstName: John
+      lastName: Doe
+      password: johnpassword
+      plan: FREE
+      role: USER
+      username: johndoe
+    properties:
+      email:
+        description: The email of the user
+        format: email
+        type: string
+      firstName:
+        description: The first name of the user
+        type: string
+      lastName:
+        description: The last name of the user
+        type: string
+      password:
+        description: The password of the user
+        type: string
+      plan:
+        description: The plan of the user
+        enum:
+          - FREE
+          - PREMIUM
+          - PRO
+        type: string
+      role:
+        description: The role of the user
+        enum:
+          - USER
+          - ADMIN
+        type: string
+      username:
+        description: The username of the user
+        type: string
+    required:
+      - firstName
+      - lastName
+      - username
+      - password
+      - email
+    type: object
+  UserPut:
+    example:
+      email: johndoe@test.com
+      firstName: John
+      lastName: Doe
+      password: johnpassword
+      plan: FREE
+      role: USER
+      username: johndoe
+    properties:
+      email:
+        description: The email of the user
+        format: email
+        type: string
+      firstName:
+        description: The first name of the user
+        type: string
+      lastName:
+        description: The last name of the user
+        type: string
+      password:
+        description: The password of the user
+        type: string
+      plan:
+        description: The plan of the user
+        enum:
+          - FREE
+          - PREMIUM
+          - PRO
+        type: string
+      role:
+        description: The role of the user
+        enum:
+          - USER
+          - ADMIN
+        type: string
+      username:
+        description: The username of the user
+        type: string
+    type: object
+securityDefinitions:
+  bearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+tags:
+  - description: The users managing API
+    name: Users
+  - description: The messages managing API
+    name: Messages
+x-components: {}
+x-google-backend:
+  address: 'http://users-microservice.fisg4.javiercavlop.com'
+
