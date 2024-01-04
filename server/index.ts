@@ -7,6 +7,7 @@ import './db/conn'
 import { generateToken, verifyToken } from './utils/jwtUtils'
 import swaggerjsdoc from 'swagger-jsdoc'
 import swaggerui from 'swagger-ui-express'
+import bodyParser, { BodyParser } from 'body-parser'
 
 const app: Express = express()
 
@@ -58,6 +59,9 @@ const swaggerOptions = {
 }
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions)
+
+app.use(bodyParser.json({limit: "10mb"}))
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 app.use((req, res, next) => {
 

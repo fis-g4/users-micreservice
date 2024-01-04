@@ -373,7 +373,7 @@ router.get('/reset', async (req: Request, res: Response) => {
 router.get('/:username', async (req: Request, res: Response) => {
     if(req.params.username === 'all') {
         const me = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
-        User.find({})
+        User.find({role: UserRole.USER})
             .select('username profilePicture')
             .then((users) => {
                 if (!users) {
@@ -828,7 +828,7 @@ async function updateUser(username: string, userData: any, res: Response) {
                 }
             }
 
-            if (userData.newPassword) {
+            if (userData.newPassword && userData.newPassword.trim() === "") {
                 if(!userData.currentPassword){
                     return res
                         .status(400)
