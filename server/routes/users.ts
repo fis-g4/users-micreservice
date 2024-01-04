@@ -8,6 +8,16 @@ import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
 import { v4 as uuidv4 } from 'uuid'
 
+const brevo = require('sib-api-v3-sdk');
+let defaultClient = brevo.ApiClient.instance;
+
+let apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY ?? '';
+
+function getHTML(){
+    return '<html><body><p>Hi {{ params.firstName | default : "NAME" }} {{ params.lastName | default : "SURNAME" }},</p><p>We have recovered your password. Please use the following credentials to authenticate in <a href="https://fisg4.javiercavlop.com">https://fisg4.javiercavlop.com</a>:</p><p> username: {{ params.username | default : "USERNAME" }}</p><p> password: {{ params.password | default : "PASSWORD" }}</p></br><p>Please do not respond to this email,</p><p><strong>FIS G4 - TEAM</strong></p></body></html>    '
+}
+
 const bucketUrl = process.env.GCS_BUCKET_URL ?? ''
 const bucketName = process.env.GCS_BUCKET_NAME ?? ''
 
@@ -276,6 +286,48 @@ router.get('/me', async (req: Request, res: Response) => {
         })
 })
 
+router.get('/reset', async (req: Request, res: Response) => {
+    let username = req.query.username as string
+    let user = await User.findOne({ username: username });
+
+    if(!user){
+        return res.status(400).send({ error: userErrors.userNotExistError })
+    }
+
+    let randomPassword = Math.random().toString(36).slice(-8);  
+
+    user.password = bcrypt.hashSync(randomPassword, salt)
+
+    try{
+        await user.save()
+    }catch(err){
+        return res.status(400).send({ error: err })
+    }
+
+    let apiInstance = new brevo.TransactionalEmailsApi();
+    let sendSmtpEmail = new brevo.SendSmtpEmail();
+    
+    sendSmtpEmail.subject = "Reset your password - FIS G4";
+    sendSmtpEmail.htmlContent = getHTML();
+    sendSmtpEmail.sender = { "name": "FIS G4 - TEAM", "email": "fisg4microservices@gmail.com" };
+    sendSmtpEmail.to = [
+      { "email": user.email, "name": user.__v.fullName }
+    ];
+    sendSmtpEmail.params = { 
+        "username": user.username,
+        "password": randomPassword,
+        "firstName": user.firstName,
+        "lastName": user.lastName
+     };
+    
+
+    apiInstance.sendTransacEmail(sendSmtpEmail).then((data: any) => {
+        return res.status(200).json({ message: 'Password reset!' })
+    }).catch((error: any) => {
+        return res.status(400).send({ error: error })
+    });
+});
+
 /**
  * @swagger
  * /{username}:
@@ -323,22 +375,42 @@ router.get('/me', async (req: Request, res: Response) => {
  *              $ref: '#/components/schemas/Error500'
  */
 router.get('/:username', async (req: Request, res: Response) => {
-    User.findOne({ username: req.params.username })
-        .select('-password')
-        .then((user) => {
-            if (!user) {
-                return res
-                    .status(404)
-                    .send({ error: userErrors.userNotExistError })
-            }
+    if(req.params.username === 'all') {
+        const me = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
+        User.find({role: UserRole.USER})
+            .select('username profilePicture')
+            .then((users) => {
+                if (!users) {
+                    return res
+                        .status(404)
+                        .send({ error: userErrors.userNotExistError })
+                }
 
-            return res.status(200).json({ data: user })
-        })
-        .catch((err) => {
-            return res.status(400).send({
-                error: err ?? 'Something went wrong while getting the user',
+                return res.status(200).json({ data: users.filter((user) => user.username !== me.username) })
             })
-        })
+            .catch((err) => {
+                return res.status(400).send({
+                    error: err ?? 'Something went wrong while getting the user',
+                })
+            })
+    } else{
+        User.findOne({ username: req.params.username })
+            .select('-password')
+            .then((user) => {
+                if (!user) {
+                    return res
+                        .status(404)
+                        .send({ error: userErrors.userNotExistError })
+                }
+
+                return res.status(200).json({ data: user })
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    error: err ?? 'Something went wrong while getting the user',
+                })
+            })
+    }
 })
 
 // ------------------ POST ROUTES ------------------
@@ -405,8 +477,20 @@ router.post('/new', async (req: Request, res: Response) => {
 
         user.save()
 
+        let userCreated = {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+            profilePicture: user.profilePicture,
+            coinsAmount: user.coinsAmount,
+            plan: user.plan
+        }
+
+
         generateToken(user).then((token) => {
-            return res.status(201).json({ data: token })
+            return res.status(201).json({ data: {token: token, user: userCreated } })
         }).catch((err) => {
             return res.status(500).send({ error: err })
         })
@@ -469,8 +553,19 @@ router.post('/login', async (req: Request, res: Response) => {
                 .send({ error: userErrors.invalidUsernameOrPasswordError })
         }
 
+        let userData = {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+            profilePicture: user.profilePicture,
+            coinsAmount: user.coinsAmount,
+            plan: user.plan
+        }
+
         generateToken(user).then((token) => {
-            return res.status(200).json({ data: token })
+            return res.status(200).json({ data: {token: token, user: userData }})
         }).catch((err) => {
             return res.status(500).send({ error: err })
         });
@@ -537,6 +632,7 @@ router.put(
         let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
 
         if (req.file) {
+            
             const blob = bucket.file(uuidv4() + '-' + req.file.originalname)
 
             const blobStream = blob.createWriteStream({
@@ -703,6 +799,7 @@ router.delete('/me', async (req: Request, res: Response) => {
 })
 
 async function updateUser(username: string, userData: any, res: Response) {
+    
     if (!userData) {
         return res.status(400).send({ error: userErrors.noUserDataError })
     }
@@ -714,6 +811,7 @@ async function updateUser(username: string, userData: any, res: Response) {
 
     User.findOne({ username: username })
         .then(async (user: IUser | null) => {
+
             if (!user) {
                 return res
                     .status(404)
@@ -731,6 +829,21 @@ async function updateUser(username: string, userData: any, res: Response) {
                         changedEmail = true
                     }
                     user[key] = userData[key]
+                }
+            }
+
+            if (userData.newPassword && userData.newPassword.trim() === "") {
+                if(!userData.currentPassword){
+                    return res
+                        .status(400)
+                        .send({ error: userErrors.invalidCurrentPasswordError })
+                }
+                if (!bcrypt.compareSync(userData.currentPassword, user.password)) {
+                    return res
+                        .status(400)
+                        .send({ error: userErrors.invalidCurrentPasswordError })
+                }else{
+                    user.password = bcrypt.hashSync(userData.newPassword, salt)
                 }
             }
 
@@ -765,9 +878,14 @@ async function updateUser(username: string, userData: any, res: Response) {
 
                 User.updateOne({ username: username }, user)
                     .then(() => {
-                        return res
-                            .status(200)
-                            .json({ message: 'User updated!' })
+                        generateToken(user).then((token) => {
+                            res.setHeader('Authorization', `Bearer ${token}`)
+                            return res
+                                .status(200)
+                                .json({ message: 'User updated!' })
+                        }).catch((err) => {
+                            console.error(err)
+                        })
                     })
                     .catch((err) => {
                         return res.status(400).send({

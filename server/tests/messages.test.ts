@@ -203,11 +203,11 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
     beforeAll(async() => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_1)
         expect(response.statusCode).toBe(201)
-        token1 = response.body.data
+        token1 = response.body.data.token
 
         const response2 = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_2)
         expect(response2.statusCode).toBe(201)
-        token2 = response2.body.data
+        token2 = response2.body.data.token
     })
 
     afterAll(async () => {
@@ -249,9 +249,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             sender: TEST_USER_1.username,
             receivers: [TEST_USER_2.username],
             message: 'Test message',
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(400)
         expect(response.body.error.name).toBe('ValidationError')
@@ -262,9 +259,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             sender: TEST_USER_1.username,
             receivers: [TEST_USER_2.username],
             subject: 'Test subject',
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(400)
         expect(response.body.error.name).toBe('ValidationError')
@@ -276,9 +270,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             receivers: [TEST_USER_2.username],
             subject: 'Test subject',
             message: 'a'.repeat(10501),
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(400)
         expect(response.body.error.name).toBe('ValidationError')
@@ -290,9 +281,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             receivers: [TEST_USER_2.username],
             subject: 'a'.repeat(129),
             message: 'Test message',
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(400)
         expect(response.body.error.name).toBe('ValidationError')
@@ -303,9 +291,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             receivers: [TEST_USER_2.username],
             subject: 'Test subject',
             message: 'Test message',
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(400)
         expect(response.body.error).toBe(messagesErrors.invalidSenderError)
@@ -316,22 +301,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             sender: TEST_USER_1.username,
             subject: 'Test subject',
             message: 'Test message',
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
-        })
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(messagesErrors.invalidMessageDataError)
-    })
-
-    it('Should return 400, with no has_been_opened', async () => {
-        const response = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
-            sender: TEST_USER_1.username,
-            receivers: [TEST_USER_2.username],
-            subject: 'Test subject',
-            message: 'Test message',
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(400)
         expect(response.body.error).toBe(messagesErrors.invalidMessageDataError)
@@ -343,23 +312,8 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             receivers: [TEST_USER_2.username],
             subject: 'Test subject',
             message: 'Test message',
-            has_been_opened: [false],
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(201)
-    })
-
-    it('Should return 400, with no deleted_by_receiver', async () => {
-        const response = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
-            sender: TEST_USER_1.username,
-            receivers: [TEST_USER_2.username],
-            subject: 'Test subject',
-            message: 'Test message',
-            has_been_opened: [false],
-            deleted_by_sender: false,
-        })
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error).toBe(messagesErrors.invalidMessageDataError)
     })
 
     it('Should return 201 with date', async () => {
@@ -369,9 +323,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             subject: 'Test subject',
             message: 'Test message',
             date: Date.now(),
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(201)
     })
@@ -383,9 +334,6 @@ describe(`POST ${TEST_URLS.newMessage}`, () => {
             subject: 'Test subject',
             message: 'Test message',
             date: Date.now() + 1000,
-            has_been_opened: [false],
-            deleted_by_sender: false,
-            deleted_by_receiver: [false],
         })
         expect(response.statusCode).toBe(201)
     })
@@ -401,11 +349,11 @@ describe(`PATCH ${TEST_URLS.messagesOpen}`, () => {
     beforeAll(async() => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_1)
         expect(response.statusCode).toBe(201)
-        token1 = response.body.data
+        token1 = response.body.data.token
 
         const response2 = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_2)
         expect(response2.statusCode).toBe(201)
-        token2 = response2.body.data
+        token2 = response2.body.data.token
 
         const response3 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
             sender: TEST_USER_1.username,
@@ -483,11 +431,11 @@ describe(`PATCH ${TEST_URLS.messagesUpdate}`, () => {
     beforeAll(async() => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_1)
         expect(response.statusCode).toBe(201)
-        token1 = response.body.data
+        token1 = response.body.data.token
 
         const response2 = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_2)
         expect(response2.statusCode).toBe(201)
-        token2 = response2.body.data
+        token2 = response2.body.data.token
 
         const response3 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
             sender: TEST_USER_1.username,
@@ -585,11 +533,11 @@ describe(`DELETE ${TEST_URLS.messagesDelete}`, () => {
     beforeAll(async() => {
         const response = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_1)
         expect(response.statusCode).toBe(201)
-        token1 = response.body.data
+        token1 = response.body.data.token
 
         const response2 = await request(BASE_URL).post(TEST_URLS.newUser).send(TEST_USER_2)
         expect(response2.statusCode).toBe(201)
-        token2 = response2.body.data
+        token2 = response2.body.data.token
 
         const response3 = await request(BASE_URL).post(TEST_URLS.newUser).send({
             firstName: 'Test',
@@ -601,7 +549,7 @@ describe(`DELETE ${TEST_URLS.messagesDelete}`, () => {
             role: UserRole.USER,
         })
         expect(response3.statusCode).toBe(201)
-        token3 = response3.body.data
+        token3 = response3.body.data.token
 
         const response4 = await request(BASE_URL).post(TEST_URLS.newMessage).set('Authorization', `Bearer ${token1}`).send({
             sender: TEST_USER_1.username,

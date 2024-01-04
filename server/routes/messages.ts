@@ -371,8 +371,21 @@ router.post('/me/messages/new', async (req: Request, res: Response) => {
         messageData.date = new Date(Date.now())
     }
 
+    if (messageData?.deleted_by_sender !== false) {
+        messageData.deleted_by_sender = false
+    }
+
+    if (messageData?.receivers) {
+        messageData.deleted_by_receiver = messageData.receivers.map(() => false)
+        messageData.has_been_opened = messageData.receivers.map(() => false)
+    }
+    
+
     try{
       const message = Message.build(messageData)
+      if (message.receivers.length === 0 || message.receivers === undefined || message.receivers === null){
+          return res.status(400).send({error: messagesErrors.invalidMessageDataError})
+      }
       if (message.receivers.length !== message.has_been_opened.length || message.receivers.length !== message.deleted_by_receiver.length) {
           return res.status(400).send({error: messagesErrors.invalidMessageDataError})
       }
