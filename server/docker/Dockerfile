@@ -7,6 +7,7 @@ WORKDIR /usr/src/server
 # Copy the rest of the application source code to the container
 COPY ./server .
 COPY ./GoogleCloudKey.json ..
+COPY ./.env .
 
 # Install Node.js dependencies
 RUN npm install
@@ -14,9 +15,6 @@ RUN npm install
 RUN npm uninstall bcrypt
 
 RUN npm install bcrypt
-
-# Define a default environment variable if not provided during runtime
-RUN mv .env.prod .env
 
 # Expose a port if your React app runs a server (e.g., for development purposes)
 # EXPOSE 3000

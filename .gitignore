@@ -162,3 +162,4 @@ terraform/.env.prod
 .terraform*
 .ssh/
 *.tfvars
+.terraform/
