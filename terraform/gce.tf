@@ -12,7 +12,7 @@ resource "google_compute_instance" "users_service_instance" {
   }
 
   network_interface {
-    network = "fis-g4-network-cd"
+    network = google_compute_network.fis_g4_network_cd.id
 
     access_config {
     }
