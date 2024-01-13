@@ -679,7 +679,7 @@ definitions:
       firstName: John
       id: 60b0a1b7c9e8a1b9c8a1b9c8
       lastName: Doe
-      plan: FREE
+      plan: BASIC
       role: USER
       username: johndoe
     properties:
@@ -699,8 +699,8 @@ definitions:
       plan:
         description: The plan of the user
         enum:
-          - FREE
-          - PREMIUM
+          - BASIC
+          - ADVANCED
           - PRO
         type: string
       role:
@@ -750,7 +750,7 @@ definitions:
       firstName: John
       lastName: Doe
       password: johnpassword
-      plan: FREE
+      plan: BASIC
       role: USER
       username: johndoe
     properties:
@@ -770,8 +770,8 @@ definitions:
       plan:
         description: The plan of the user
         enum:
-          - FREE
-          - PREMIUM
+          - BASIC
+          - ADVANCED
           - PRO
         type: string
       role:
@@ -796,7 +796,7 @@ definitions:
       firstName: John
       lastName: Doe
       password: johnpassword
-      plan: FREE
+      plan: BASIC
       role: USER
       username: johndoe
     properties:
@@ -816,8 +816,8 @@ definitions:
       plan:
         description: The plan of the user
         enum:
-          - FREE
-          - PREMIUM
+          - BASIC
+          - ADVANCED
           - PRO
         type: string
       role:

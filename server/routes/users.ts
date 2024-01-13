@@ -53,7 +53,7 @@ const EMPTY_USER: IUser = {
     email: '',
     profilePicture: bucketUrl + '/' + bucketName + '/default-user.jpg',
     coinsAmount: 0,
-    plan: PlanType.FREE,
+    plan: PlanType.BASIC,
     role: UserRole.USER,
 }
 
@@ -104,7 +104,7 @@ const EMPTY_USER: IUser = {
  *         plan:
  *           type: string
  *           description: The plan of the user
- *           enum: [FREE, PREMIUM, PRO]
+ *           enum: [BASIC, ADVANCED, PRO]
  *         role:
  *           type: string
  *           description: The role of the user
@@ -115,7 +115,7 @@ const EMPTY_USER: IUser = {
  *         username: johndoe
  *         password: johnpassword
  *         email: johndoe@test.com
- *         plan: FREE
+ *         plan: BASIC
  *         role: USER
  *     UserPut:
  *       type: object
@@ -139,7 +139,7 @@ const EMPTY_USER: IUser = {
  *         plan:
  *           type: string
  *           description: The plan of the user
- *           enum: [FREE, PREMIUM, PRO]
+ *           enum: [BASIC, ADVANCED, PRO]
  *         role:
  *           type: string
  *           description: The role of the user
@@ -150,7 +150,7 @@ const EMPTY_USER: IUser = {
  *         username: johndoe
  *         password: johnpassword
  *         email: johndoe@test.com
- *         plan: FREE
+ *         plan: BASIC
  *         role: USER
  *     User:
  *       type: object
@@ -181,7 +181,7 @@ const EMPTY_USER: IUser = {
  *         plan:
  *           type: string
  *           description: The plan of the user
- *           enum: [FREE, PREMIUM, PRO]
+ *           enum: [BASIC, ADVANCED, PRO]
  *         role:
  *           type: string
  *           description: The role of the user
@@ -192,7 +192,7 @@ const EMPTY_USER: IUser = {
  *         lastName: Doe
  *         username: johndoe
  *         email: johndoe@test.com
- *         plan: FREE
+ *         plan: BASIC
  *         role: USER
  *     UserList:
  *       type: object

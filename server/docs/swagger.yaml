@@ -63,8 +63,8 @@ components:
           type: string
           description: The plan of the user
           enum:
-            - FREE
-            - PREMIUM
+            - BASIC
+            - ADVANCED
             - PRO
         role:
           type: string
@@ -78,7 +78,7 @@ components:
         username: johndoe
         password: johnpassword
         email: johndoe@test.com
-        plan: FREE
+        plan: BASIC
         role: USER
     UserPut:
       type: object
@@ -103,8 +103,8 @@ components:
           type: string
           description: The plan of the user
           enum:
-            - FREE
-            - PREMIUM
+            - BASIC
+            - ADVANCED
             - PRO
         role:
           type: string
@@ -118,7 +118,7 @@ components:
         username: johndoe
         password: johnpassword
         email: johndoe@test.com
-        plan: FREE
+        plan: BASIC
         role: USER
     User:
       type: object
@@ -150,8 +150,8 @@ components:
           type: string
           description: The plan of the user
           enum:
-            - FREE
-            - PREMIUM
+            - BASIC
+            - ADVANCED
             - PRO
         role:
           type: string
@@ -165,7 +165,7 @@ components:
         lastName: Doe
         username: johndoe
         email: johndoe@test.com
-        plan: FREE
+        plan: BASIC
         role: USER
     UserList:
       type: object
@@ -493,7 +493,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  /{username}:
+  "/{username}":
     get:
       summary: Returns the info of the user that has the username passed as parameter
       tags:
@@ -678,7 +678,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  /me/messages?filter={filter}&sort={sort}&offset={offset}&limit={limit}:
+  "/me/messages?filter={filter}&sort={sort}&offset={offset}&limit={limit}":
     get:
       summary: Get all the messages of the user
       tags:
@@ -789,7 +789,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  /me/messages/{messageId}/open:
+  "/me/messages/{messageId}/open":
     patch:
       summary: Checks a message as opened
       tags:
@@ -833,7 +833,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  /me/messages/{messageId}:
+  "/me/messages/{messageId}":
     patch:
       summary: Enables to change the subject or the message of a message already sent
       tags:

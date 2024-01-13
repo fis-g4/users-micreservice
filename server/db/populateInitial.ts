@@ -17,7 +17,7 @@ function populateUsers() {
         email: 'maria@example.com',
         profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
         coinsAmount: 0,
-        plan: PlanType.FREE,
+        plan: PlanType.BASIC,
         role: UserRole.USER,
     }).save();
     
@@ -29,7 +29,7 @@ function populateUsers() {
         email: 'juan@example.com',
         profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
         coinsAmount: 100,
-        plan: PlanType.PREMIUM,
+        plan: PlanType.ADVANCED,
         role: UserRole.USER,
     }).save();
 

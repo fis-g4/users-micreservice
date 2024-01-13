@@ -3,8 +3,8 @@ import mongoose, { ObjectId } from 'mongoose'
 const { Schema } = mongoose
 
 enum PlanType{
-    FREE = 'FREE',
-    PREMIUM = 'PREMIUM',
+    BASIC = 'BASIC',
+    ADVANCED = 'ADVANCED',
     PRO = 'PRO'
 }
 
@@ -84,7 +84,7 @@ const userSchema = new Schema(
         plan: {
             type: String,
             enum: Object.values(PlanType),
-            default: PlanType.FREE,
+            default: PlanType.BASIC,
             trim: true,
         },
 

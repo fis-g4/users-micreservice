@@ -26,7 +26,7 @@ const TEST_USER_1 = {
     username: 'TEST_USER_1',
     password: 'testpassword',
     email: 'testemail1@example.com',
-    plan: PlanType.FREE,
+    plan: PlanType.BASIC,
     role: UserRole.USER,
 }
 
@@ -36,7 +36,7 @@ const TEST_USER_2 = {
     username: 'TEST_USER_2',
     password: 'testpassword',
     email: 'testemail2@example.com',
-    plan: PlanType.FREE,
+    plan: PlanType.BASIC,
     role: UserRole.USER,
 }
 
@@ -545,7 +545,7 @@ describe(`DELETE ${TEST_URLS.messagesDelete}`, () => {
             username: 'TEST_USER_3',
             password: 'testpassword',
             email: 'test3@test.com',
-            plan: PlanType.FREE,
+            plan: PlanType.BASIC,
             role: UserRole.USER,
         })
         expect(response3.statusCode).toBe(201)

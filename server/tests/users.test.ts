@@ -22,7 +22,7 @@ const TEST_USER = {
     username: 'TEST_USER',
     password: 'testpassword',
     email: 'testemail@example.com',
-    plan: PlanType.FREE,
+    plan: PlanType.BASIC,
     role: UserRole.USER,
 }
 
