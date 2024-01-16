@@ -262,7 +262,7 @@ const EMPTY_USER: IUser = {
  *              $ref: '#/components/schemas/Error500'
  */
 router.get('/check', async (req: Request, res: Response) => {
-    return res.status(200).json({ message: "The users service is working properly!!" })
+    return res.status(200).json({ message: "The users service is working properly" })
 })
 
 router.get('/me', async (req: Request, res: Response) => {
