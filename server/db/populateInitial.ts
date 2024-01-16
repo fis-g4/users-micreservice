@@ -105,10 +105,18 @@ async function populateDB() {
                 })
         })
     } else {
-        User.deleteMany({ role: UserRole.ADMIN }).then(() => {
-            console.log('Populating DB with admin users...')
-            populateAdmins()
-            console.log('Populated!')
+        User.find({ role: UserRole.ADMIN }).countDocuments().then((count) => {
+            if(count === 0) {
+                console.log('Populating DB with admin users...')
+                populateAdmins()
+                console.log('Populated!')
+            }else{
+                User.deleteMany({ role: UserRole.ADMIN }).then(() => {
+                    console.log('Populating DB with admin users...')
+                    populateAdmins()
+                    console.log('Populated!') 
+                })
+            }
         })
     }
 }
