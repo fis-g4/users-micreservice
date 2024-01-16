@@ -32,7 +32,9 @@ function populateUsers() {
         plan: PlanType.ADVANCED,
         role: UserRole.USER,
     }).save();
+}
 
+function populateAdmins() {
     User.build({
         firstName: 'Admin',
         lastName: 'User',
@@ -56,23 +58,49 @@ function populateUsers() {
         plan: PlanType.PRO,
         role: UserRole.ADMIN,
     }).save();
+
+    User.build({
+        firstName: 'Payments',
+        lastName: 'Admin User',
+        username: process.env.PAYMENT_SERVICE_USERNAME ?? '',
+        password: bcrypt.hashSync(process.env.PAYMENT_SERVICE_PASSWORD ?? '', salt),
+        email: 'paymentadmin@example.com',
+        profilePicture: bucketUrl + "/" + bucketName + '/default-user.jpg',
+        coinsAmount: 99999,
+        plan: PlanType.PRO,
+        role: UserRole.ADMIN,
+    })
 }
 
 async function populateDB() {
     
     if (process.env.NODE_ENV !== 'production') {
 
-        console.log('Populating DB...');
-
         User.collection.countDocuments().then((count) => {
             if (count === 0 || POPULATE_DB_ON_EACH_RELOAD) {
+
+                console.log('Populating DB with example users...');
+
                 User.collection.drop().then(()=>{
                     populateUsers()
+                    console.log('Populated!');
                 });
             }
         })
-        
-        console.log('Populated!');
+
+        User.find({role: UserRole.ADMIN}).countDocuments().then((count) => {
+            if (count === 0 || POPULATE_DB_ON_EACH_RELOAD) {
+                
+                console.log('Populating DB with admin users...');
+
+                User.collection.drop().then(()=>{
+                    populateAdmins()
+                    console.log('Populated!');
+                });
+            }
+        });
+    }else{
+        populateAdmins()
     }
 
 }
