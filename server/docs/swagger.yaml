@@ -513,7 +513,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  "/reset?username={username}":
+  /reset?username={username}:
     get:
       summary: Sends an email with the new credentials
       tags:
@@ -594,7 +594,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  "/{username}":
+  /{username}:
     get:
       summary: Returns the info of the user that has the username passed as parameter
       tags:
@@ -724,7 +724,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  "/me/messages?filter={filter}&sort={sort}&offset={offset}&limit={limit}":
+  /me/messages?filter={filter}&sort={sort}&offset={offset}&limit={limit}:
     get:
       summary: Get all the messages of the user
       tags:
@@ -835,7 +835,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  "/me/messages/{messageId}/open":
+  /me/messages/{messageId}/open:
     patch:
       summary: Checks a message as opened
       tags:
@@ -879,7 +879,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
-  "/me/messages/{messageId}":
+  /me/messages/{messageId}:
     patch:
       summary: Enables to change the subject or the message of a message already sent
       tags:

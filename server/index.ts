@@ -10,6 +10,7 @@ import swaggerui from 'swagger-ui-express'
 import bodyParser, { BodyParser } from 'body-parser'
 import yaml from 'yaml'
 import fs from 'fs';
+import { receiveMessages } from './rabbitmq/operations'
 
 const app: Express = express()
 
@@ -94,6 +95,9 @@ app.use((req, res, next) => {
     })
 
 })
+
+const MICROSERVICE_QUEUE = 'users_microservice'
+receiveMessages(MICROSERVICE_QUEUE)
 
 const port = process.env.PORT ?? 8000
 
