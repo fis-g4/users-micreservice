@@ -50,12 +50,16 @@ jobs:
                   envkey_GCF_VERIFY_TOKEN_ENDPOINT: ${{ vars.GCF_VERIFY_TOKEN_ENDPOINT }}
                   envkey_GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT: ${{ vars.GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT }}
                   envkey_SENDINBLUE_API_KEY: ${{ secrets.CI_SENDINBLUE_API_KEY }}
+                  envkey_COURSES_SERVICE_USERNAME: ${{ secrets.CI_COURSES_SERVICE_USERNAME }}
+                  envkey_COURSES_SERVICE_PASSWORD: ${{ secrets.CI_COURSES_SERVICE_PASSWORD }}
+                  envkey_PAYMENT_SERVICE_USERNAME: ${{ secrets.CI_PAYMENT_SERVICE_USERNAME }}
+                  envkey_PAYMENT_SERVICE_PASSWORD: ${{ secrets.CI_PAYMENT_SERVICE_PASSWORD }}
                   directory: ./server
                   file_name: .env
                   fail_on_empty: false
                   sort_keys: false
 
-            - name: Start MongoDB
+            - name: Start MongoDBs
               uses: supercharge/mongodb-github-action@1.10.0
               with:
                   mongodb-version: ${{ vars.CI_MONGODB_VERSION }}
