@@ -837,7 +837,7 @@ router.delete('/me', async (req: Request, res: Response) => {
             const data = {
                 username: decodedToken.username
             }
-            sendMessage('user/notification', 'notificationUserDeletion ', process.env.API_KEY ?? '', JSON.stringify(data))
+            sendMessage('user/notification', 'notificationUserDeletion', process.env.API_KEY ?? '', JSON.stringify(data))
             return res.status(200).json({ message: 'User deleted!' })
         })
         .catch((err) => {
