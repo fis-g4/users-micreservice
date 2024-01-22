@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'
-import { IUser, User } from '../db/models/user'
+import { IUser, User, PlanType } from '../db/models/user'
 import { IMessage, Message } from '../db/models/message'
 import { getPayloadFromToken, getTokenFromRequest } from '../utils/jwtUtils'
 import { messagesErrors } from '../utils/errorMessages/messages'
@@ -7,6 +7,8 @@ import { SortOrder } from 'mongoose'
 
 const router = express.Router()
 const DEFAULT_LIMIT = 25;
+
+const receiversCapacityLimit = {"BASIC": 1, "ADVANCED": 10, "PRO": 10000000}
 
 /**
  * @swagger
@@ -403,6 +405,9 @@ router.post('/me/messages/new', async (req: Request, res: Response) => {
       }
       if ((await User.find({ username: { $in: message.receivers } }).countDocuments()) !== message.receivers.length) {
           return res.status(404).send({error: messagesErrors.userDoesNotExistError})
+      }
+      if(message.receivers.length > receiversCapacityLimit[user.plan]){
+          return res.status(400).send({error: messagesErrors.invalidCapacityError})
       }
       await message.save()
     } catch (err) {

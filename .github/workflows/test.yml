@@ -18,10 +18,9 @@ jobs:
 
             - name: Decrypt Google credentials.json
               env:
-                GOOGLE_API_PW: ${{ secrets.GCP_CREDENTIALS_PK }}
+                GCP_CREDENTIALS: ${{ secrets.ENCODED_GCP_CREDENTIALS }}
               run: |
-                gpg --quiet --batch --yes --decrypt --passphrase="$GOOGLE_API_PW" \
-                --output $GITHUB_WORKSPACE/GoogleCloudKey.json GoogleCloudKey.json.gpg
+                echo "$GCP_CREDENTIALS" | base64 --decode > GoogleCloudKey.json
 
             - name: Make envfile
               uses: SpicyPizza/create-envfile@v2.0
@@ -50,12 +49,16 @@ jobs:
                   envkey_GCF_VERIFY_TOKEN_ENDPOINT: ${{ vars.GCF_VERIFY_TOKEN_ENDPOINT }}
                   envkey_GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT: ${{ vars.GCF_GET_PAYLOAD_FROM_TOKEN_ENDPOINT }}
                   envkey_SENDINBLUE_API_KEY: ${{ secrets.CI_SENDINBLUE_API_KEY }}
+                  envkey_COURSES_SERVICE_USERNAME: ${{ secrets.CI_COURSES_SERVICE_USERNAME }}
+                  envkey_COURSES_SERVICE_PASSWORD: ${{ secrets.CI_COURSES_SERVICE_PASSWORD }}
+                  envkey_PAYMENT_SERVICE_USERNAME: ${{ secrets.CI_PAYMENT_SERVICE_USERNAME }}
+                  envkey_PAYMENT_SERVICE_PASSWORD: ${{ secrets.CI_PAYMENT_SERVICE_PASSWORD }}
                   directory: ./server
                   file_name: .env
                   fail_on_empty: false
                   sort_keys: false
 
-            - name: Start MongoDB
+            - name: Start MongoDBs
               uses: supercharge/mongodb-github-action@1.10.0
               with:
                   mongodb-version: ${{ vars.CI_MONGODB_VERSION }}

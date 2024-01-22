@@ -7,6 +7,8 @@ import multer from 'multer'
 import { Storage } from '@google-cloud/storage'
 import { userErrors } from '../utils/errorMessages/users'
 import { v4 as uuidv4 } from 'uuid'
+import { Message } from '../db/models/message'
+import { sendMessage } from '../rabbitmq/operations'
 
 const brevo = require('sib-api-v3-sdk');
 let defaultClient = brevo.ApiClient.instance;
@@ -53,7 +55,7 @@ const EMPTY_USER: IUser = {
     email: '',
     profilePicture: bucketUrl + '/' + bucketName + '/default-user.jpg',
     coinsAmount: 0,
-    plan: PlanType.FREE,
+    plan: PlanType.BASIC,
     role: UserRole.USER,
 }
 
@@ -101,22 +103,12 @@ const EMPTY_USER: IUser = {
  *           type: string
  *           description: The email of the user
  *           format: email
- *         plan:
- *           type: string
- *           description: The plan of the user
- *           enum: [FREE, PREMIUM, PRO]
- *         role:
- *           type: string
- *           description: The role of the user
- *           enum: [USER, ADMIN]
  *       example:
  *         firstName: John
  *         lastName: Doe
  *         username: johndoe
  *         password: johnpassword
  *         email: johndoe@test.com
- *         plan: FREE
- *         role: USER
  *     UserPut:
  *       type: object
  *       properties:
@@ -126,32 +118,27 @@ const EMPTY_USER: IUser = {
  *         lastName:
  *           type: string
  *           description: The last name of the user
- *         username:
- *           type: string
- *           description: The username of the user
- *         password:
+ *         currentPassword:
  *           type: string
  *           description: The password of the user
+ *         newPassword:
+ *            type: string
+ *            description: The new password of the user
  *         email:
  *           type: string
  *           description: The email of the user
  *           format: email
- *         plan:
+ *         profilePicture:
  *           type: string
- *           description: The plan of the user
- *           enum: [FREE, PREMIUM, PRO]
- *         role:
- *           type: string
- *           description: The role of the user
- *           enum: [USER, ADMIN]
+ *           description: The profile picture of the user
+ *           format: url
  *       example:
  *         firstName: John
  *         lastName: Doe
- *         username: johndoe
- *         password: johnpassword
+ *         currentPassword: johnpassword
+ *         newPassword: newpassword
  *         email: johndoe@test.com
- *         plan: FREE
- *         role: USER
+ *         profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
  *     User:
  *       type: object
  *       required:
@@ -161,6 +148,8 @@ const EMPTY_USER: IUser = {
  *         - email
  *         - plan
  *         - role
+ *         - profilePicture
+ *         - coinsAmount
  *       properties:
  *         id:
  *           type: string
@@ -181,19 +170,44 @@ const EMPTY_USER: IUser = {
  *         plan:
  *           type: string
  *           description: The plan of the user
- *           enum: [FREE, PREMIUM, PRO]
+ *           enum: [BASIC, ADVANCED, PRO]
  *         role:
  *           type: string
  *           description: The role of the user
  *           enum: [USER, ADMIN]
+ *         profilePicture:
+ *           type: string
+ *           description: The profile picture of the user
+ *           format: url
+ *         coinsAmount:
+ *           type: number
+ *           description: The coins amount of the user
  *       example:
  *         id: 60b0a1b7c9e8a1b9c8a1b9c8
  *         firstName: John
  *         lastName: Doe
  *         username: johndoe
  *         email: johndoe@test.com
- *         plan: FREE
+ *         plan: BASIC
  *         role: USER
+ *         profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
+ *         coinsAmount: 0
+ *     UserMinimal:
+ *       type: object
+ *       required:
+ *         - username
+ *         - profilePicture
+ *       properties:
+ *         username:
+ *           type: string
+ *           description: The username of the user
+ *         profilePicture:
+ *           type: string
+ *           description: The profile picture of the user
+ *           format: url
+ *       example:
+ *         username: johndoe
+ *         profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
  *     UserList:
  *       type: object
  *       required:
@@ -203,15 +217,33 @@ const EMPTY_USER: IUser = {
  *           type: object
  *           description: The user
  *           $ref: '#/components/schemas/User'
+ *     UserAllList:
+ *       type: object
+ *       required:
+ *         - data
+ *       properties:
+ *         data:
+ *           type: list
+ *           description: The user list
+ *           items:
+ *              $ref: '#/components/schemas/UserMinimal'
  *     JWTList:
  *       type: object
  *       required:
  *         - data
  *       properties:
  *         data:
- *           type: string
- *           description: The JWT token
- *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+ *           type: object
+ *           required:
+ *             - token
+ *             - user
+ *           properties:
+ *             token:
+ *               description: The JWT token
+ *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+ *             user:
+ *               description: The user
+ *               $ref: '#/components/schemas/User'
  */
 
 /**
@@ -262,7 +294,7 @@ const EMPTY_USER: IUser = {
  *              $ref: '#/components/schemas/Error500'
  */
 router.get('/check', async (req: Request, res: Response) => {
-    return res.status(200).json({ message: "The users service is working properly!!" })
+    return res.status(200).json({ message: "The users service is working properly" })
 })
 
 router.get('/me', async (req: Request, res: Response) => {
@@ -286,12 +318,60 @@ router.get('/me', async (req: Request, res: Response) => {
         })
 })
 
+/**
+ * @swagger
+ * /reset?username={username}:
+ *   get:
+ *     summary: Sends an email with the new credentials
+ *     tags: [Users]
+ *     parameters:
+ *       - in: query
+ *         name: username
+ *         description: The username of the user to reset the password
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: johndoe
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: The user was successfully alerted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
+
 router.get('/reset', async (req: Request, res: Response) => {
     let username = req.query.username as string
     let user = await User.findOne({ username: username });
 
     if(!user){
-        return res.status(400).send({ error: userErrors.userNotExistError })
+        return res.status(404).send({ error: userErrors.userNotExistError })
     }
 
     let randomPassword = Math.random().toString(36).slice(-8);  
@@ -327,6 +407,45 @@ router.get('/reset', async (req: Request, res: Response) => {
         return res.status(400).send({ error: error })
     });
 });
+
+/**
+ * @swagger
+ * /all:
+ *   get:
+ *     summary: Returns minimal info of all users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: The info was successfully retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserAllList'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
 
 /**
  * @swagger
@@ -670,83 +789,6 @@ router.put(
     }
 )
 
-/**
- * @swagger
- * /{username}:
- *   put:
- *     summary: Updates the info of the user that has the username passed as parameter
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: username
- *         schema:
- *           type: string
- *         required: true
- *         description: The username of the user to update
- *         example: johndoe
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserPut'
- *     responses:
- *       200:
- *         description: The info was successfully updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/OK2XX'
- *       400:
- *         description: There was an error with the request
- *         content:
- *           application/json:
- *             schema:
- *              $ref: '#/components/schemas/Error400'
- *       403:
- *         description: The user that made the request has not enough privileges
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error403'
- *       404:
- *         description: The item was not found
- *         content:
- *           application/json:
- *             schema:
- *              $ref: '#/components/schemas/Error404'
- *       401:
- *         description: The request was not authorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error401'
- *       500:
- *         description: Some server error
- *         content:
- *           application/json:
- *             schema:
- *              $ref: '#/components/schemas/Error500'
- */
-router.put('/:username', async (req: Request, res: Response) => {
-    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
-
-    if (decodedToken.role !== UserRole.ADMIN) {
-        return res.status(401).send({ error: userErrors.cannotUpdateUserError })
-    }
-
-    delete req.body.profilePicture
-    delete req.body.password
-
-    updateUser(req.params.username, req.body, res)
-        .then(() => {
-            return res
-        })
-        .catch((err) => {
-            return res.status(400).send({ error: err })
-        })
-})
-
 // ------------------ DELETE ROUTES ------------------
 /**
  * @swagger
@@ -791,6 +833,11 @@ router.delete('/me', async (req: Request, res: Response) => {
 
     User.findOneAndDelete({ username: decodedToken.username })
         .then(() => {
+            Message.deleteMany({ $or: [{ sender: decodedToken.username }, { receiver: decodedToken.username }] })
+            const data = {
+                username: decodedToken.username
+            }
+            sendMessage('user/notification', 'notificationUserDeletion', process.env.API_KEY ?? '', JSON.stringify(data))
             return res.status(200).json({ message: 'User deleted!' })
         })
         .catch((err) => {

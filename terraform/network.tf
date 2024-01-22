@@ -1,7 +1,14 @@
 resource "google_compute_network" "fis_g4_network_cd" {
   name                    = "fis-g4-network-cd"
-  auto_create_subnetworks = true
+  auto_create_subnetworks = false
   mtu                     = 1460
+}
+
+resource "google_compute_subnetwork" "user_service_subnetwork" {
+  name          = "user-service-subnetwork"
+  ip_cidr_range = "10.0.10.0/24"
+  region        = var.region
+  network       = google_compute_network.fis_g4_network_cd.id
 }
 
 resource "google_compute_firewall" "fis_g4_firewall_cd" {

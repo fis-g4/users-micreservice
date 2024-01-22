@@ -59,27 +59,12 @@ components:
           type: string
           description: The email of the user
           format: email
-        plan:
-          type: string
-          description: The plan of the user
-          enum:
-            - FREE
-            - PREMIUM
-            - PRO
-        role:
-          type: string
-          description: The role of the user
-          enum:
-            - USER
-            - ADMIN
       example:
         firstName: John
         lastName: Doe
         username: johndoe
         password: johnpassword
         email: johndoe@test.com
-        plan: FREE
-        role: USER
     UserPut:
       type: object
       properties:
@@ -89,37 +74,27 @@ components:
         lastName:
           type: string
           description: The last name of the user
-        username:
-          type: string
-          description: The username of the user
-        password:
+        currentPassword:
           type: string
           description: The password of the user
+        newPassword:
+          type: string
+          description: The new password of the user
         email:
           type: string
           description: The email of the user
           format: email
-        plan:
+        profilePicture:
           type: string
-          description: The plan of the user
-          enum:
-            - FREE
-            - PREMIUM
-            - PRO
-        role:
-          type: string
-          description: The role of the user
-          enum:
-            - USER
-            - ADMIN
+          description: The profile picture of the user
+          format: url
       example:
         firstName: John
         lastName: Doe
-        username: johndoe
-        password: johnpassword
+        currentPassword: johnpassword
+        newPassword: newpassword
         email: johndoe@test.com
-        plan: FREE
-        role: USER
+        profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
     User:
       type: object
       required:
@@ -129,6 +104,8 @@ components:
         - email
         - plan
         - role
+        - profilePicture
+        - coinsAmount
       properties:
         id:
           type: string
@@ -150,8 +127,8 @@ components:
           type: string
           description: The plan of the user
           enum:
-            - FREE
-            - PREMIUM
+            - BASIC
+            - ADVANCED
             - PRO
         role:
           type: string
@@ -159,14 +136,39 @@ components:
           enum:
             - USER
             - ADMIN
+        profilePicture:
+          type: string
+          description: The profile picture of the user
+          format: url
+        coinsAmount:
+          type: number
+          description: The coins amount of the user
       example:
         id: 60b0a1b7c9e8a1b9c8a1b9c8
         firstName: John
         lastName: Doe
         username: johndoe
         email: johndoe@test.com
-        plan: FREE
+        plan: BASIC
         role: USER
+        profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
+        coinsAmount: 0
+    UserMinimal:
+      type: object
+      required:
+        - username
+        - profilePicture
+      properties:
+        username:
+          type: string
+          description: The username of the user
+        profilePicture:
+          type: string
+          description: The profile picture of the user
+          format: url
+      example:
+        username: johndoe
+        profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
     UserList:
       type: object
       required:
@@ -176,15 +178,33 @@ components:
           type: object
           description: The user
           $ref: "#/components/schemas/User"
+    UserAllList:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: list
+          description: The user list
+          items:
+            $ref: "#/components/schemas/UserMinimal"
     JWTList:
       type: object
       required:
         - data
       properties:
         data:
-          type: string
-          description: The JWT token
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+          type: object
+          required:
+            - token
+            - user
+          properties:
+            token:
+              description: The JWT token
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm...
+            user:
+              description: The user
+              $ref: "#/components/schemas/User"
     MessagePost:
       type: object
       required:
@@ -493,6 +513,87 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error500"
+  /reset?username={username}:
+    get:
+      summary: Sends an email with the new credentials
+      tags:
+        - Users
+      parameters:
+        - in: query
+          name: username
+          description: The username of the user to reset the password
+          required: true
+          schema:
+            type: string
+            example: johndoe
+      security: []
+      responses:
+        "200":
+          description: The user was successfully alerted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OK2XX"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
+  /all:
+    get:
+      summary: Returns minimal info of all users
+      tags:
+        - Users
+      responses:
+        "200":
+          description: The info was successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAllList"
+        "400":
+          description: There was an error with the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "401":
+          description: The request was not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "404":
+          description: The item was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error404"
+        "500":
+          description: Some server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error500"
   /{username}:
     get:
       summary: Returns the info of the user that has the username passed as parameter
@@ -525,61 +626,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error401"
-        "404":
-          description: The item was not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error404"
-        "500":
-          description: Some server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error500"
-    put:
-      summary: Updates the info of the user that has the username passed as parameter
-      tags:
-        - Users
-      parameters:
-        - in: path
-          name: username
-          schema:
-            type: string
-          required: true
-          description: The username of the user to update
-          example: johndoe
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserPut"
-      responses:
-        "200":
-          description: The info was successfully updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OK2XX"
-        "400":
-          description: There was an error with the request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error400"
-        "401":
-          description: The request was not authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error401"
-        "403":
-          description: The user that made the request has not enough privileges
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error403"
         "404":
           description: The item was not found
           content:
