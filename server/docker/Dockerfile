@@ -16,9 +16,6 @@ RUN npm uninstall bcrypt
 
 RUN npm install bcrypt
 
-# Expose a port if your React app runs a server (e.g., for development purposes)
-# EXPOSE 3000
-
 # Build your React application (you can customize the build command)
 RUN npm run build
 
