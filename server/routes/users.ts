@@ -139,6 +139,50 @@ const EMPTY_USER: IUser = {
  *         newPassword: newpassword
  *         email: johndoe@test.com
  *         profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
+ *     UserPutAdmin:
+ *       type: object
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           description: The first name of the user
+ *         lastName:
+ *           type: string
+ *           description: The last name of the user
+ *         currentPassword:
+ *           type: string
+ *           description: The password of the user
+ *         newPassword:
+ *           type: string
+ *           description: The new password of the user
+ *         email:
+ *           type: string
+ *           description: The email of the user
+ *           format: email
+ *         plan:
+ *           type: string
+ *           description: The plan of the user
+ *           enum: [BASIC, ADVANCED, PRO]
+ *         role:
+ *           type: string
+ *           description: The role of the user
+ *           enum: [USER, ADMIN]
+ *         profilePicture:
+ *           type: string
+ *           description: The profile picture of the user
+ *           format: url
+ *         coinsAmount:
+ *           type: number
+ *           description: The coins amount of the user
+ *       example:
+ *         firstName: John
+ *         lastName: Doe
+ *         currentPassword: johnpassword
+ *         newPassword: newpassword
+ *         email: johndoe@test.com
+ *         plan: BASIC
+ *         role: USER
+ *         profilePicture: https://storage.googleapis.com/fisg4-bucket/default-user.jpg
+ *         coinsAmount: 0
  *     User:
  *       type: object
  *       required:
@@ -813,7 +857,7 @@ router.put(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UserPut'
+ *             $ref: '#/components/schemas/UserPutAdmin'
  *     responses:
  *       200:
  *         description: The info was successfully updated
