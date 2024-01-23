@@ -9,6 +9,7 @@ const messagesErrors = {
     invalidDeleteError: 'You cannot delete this message!',
     previousDeleteError: 'Message has already been deleted!',
     userDoesNotExistError: 'User does not exist!',
+    invalidCapacityError: 'Your current plan does not allow you to send a message to that many users!',
 }
 
 export { messagesErrors }
