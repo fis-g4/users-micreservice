@@ -778,6 +778,11 @@ router.put(
 
             blobStream.end(req.file.buffer)
         } else {
+
+            if (req.body.plan){
+                return res.status(403).send({ error: userErrors.cannotUpdatePlanError })
+            }
+
             updateUser(decodedToken.username, req.body, res)
                 .then(() => {
                     return res
@@ -788,6 +793,83 @@ router.put(
         }
     }
 )
+
+/**
+ * @swagger
+ * /{username}:
+ *   put:
+ *     summary: Updates the info of the user that has the username passed as parameter
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The username of the user to update
+ *         example: johndoe
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserPut'
+ *     responses:
+ *       200:
+ *         description: The info was successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OK2XX'
+ *       400:
+ *         description: There was an error with the request
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error400'
+ *       403:
+ *         description: The user that made the request has not enough privileges
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error403'
+ *       404:
+ *         description: The item was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error404'
+ *       401:
+ *         description: The request was not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error401'
+ *       500:
+ *         description: Some server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              $ref: '#/components/schemas/Error500'
+ */
+router.put('/:username', async (req: Request, res: Response) => {
+    let decodedToken: IUser = await getPayloadFromToken(getTokenFromRequest(req) ?? "")
+
+    if (decodedToken.role !== UserRole.ADMIN) {
+        return res.status(401).send({ error: userErrors.cannotUpdateUserError })
+    }
+
+    delete req.body.profilePicture
+    delete req.body.password
+
+    updateUser(req.params.username, req.body, res)
+        .then(() => {
+            return res
+        })
+        .catch((err) => {
+            return res.status(400).send({ error: err })
+        })
+})
 
 // ------------------ DELETE ROUTES ------------------
 /**

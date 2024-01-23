@@ -13,6 +13,7 @@ const userErrors = {
     cannotUpdateUserError: 'You are not authorized to update this user',
     invalidCoinsAmountError: 'The coinsAmount must be a positive number',
     invalidCurrentPasswordError: 'The current password of the user is incorrect, you cannot modify the password',
+    cannotUpdatePlanError: 'You are not authorized to update the plan of this user through this endpoint',
 }
 
 export { userErrors }
