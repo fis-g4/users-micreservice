@@ -9,6 +9,7 @@ import { userErrors } from '../utils/errorMessages/users'
 import { v4 as uuidv4 } from 'uuid'
 import { Message } from '../db/models/message'
 import { sendMessage } from '../rabbitmq/operations'
+import { messagesErrors } from '../utils/errorMessages/messages'
 
 const brevo = require('sib-api-v3-sdk');
 let defaultClient = brevo.ApiClient.instance;
@@ -960,11 +961,15 @@ router.delete('/me', async (req: Request, res: Response) => {
     User.findOneAndDelete({ username: decodedToken.username })
         .then(() => {
             Message.deleteMany({ $or: [{ sender: decodedToken.username }, { receiver: decodedToken.username }] })
-            const data = {
-                username: decodedToken.username
-            }
-            sendMessage('user/notification', 'notificationUserDeletion', process.env.API_KEY ?? '', JSON.stringify(data))
-            return res.status(200).json({ message: 'User deleted!' })
+            .then(() => {
+                const data = {
+                    username: decodedToken.username
+                }
+                sendMessage('user/notification', 'notificationUserDeletion', process.env.API_KEY ?? '', JSON.stringify(data))
+                return res.status(200).json({ message: 'User deleted!' })
+            }).catch((err) => {
+                return res.status(400).send({ error: err })
+            });
         })
         .catch((err) => {
             return res.status(400).send({ error: userErrors.userNotExistError })
